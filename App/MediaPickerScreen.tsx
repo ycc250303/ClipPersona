@@ -26,7 +26,7 @@ const MediaPickerScreen: React.FC = () => {
   const buttonWidth = screenWidth * 0.8;
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: 'transparent',
     flex: 1,
   };
 
@@ -59,7 +59,7 @@ const MediaPickerScreen: React.FC = () => {
       },
       (response) => {
         if (response.didCancel) {
-          Alert.alert('提示', '用户取消了选择');
+          return;
         } else if (response.errorCode) {
           Alert.alert('错误', `选择视频失败: ${response.errorMessage}`);
         } else if (response.assets && response.assets[0].uri) {
@@ -78,7 +78,7 @@ const MediaPickerScreen: React.FC = () => {
       },
       (response) => {
         if (response.didCancel) {
-          Alert.alert('提示', '用户取消了拍摄');
+          return;
         } else if (response.errorCode) {
           Alert.alert('错误', `拍摄照片失败: ${response.errorMessage}`);
         } else if (response.assets && response.assets[0].uri) {
@@ -97,7 +97,7 @@ const MediaPickerScreen: React.FC = () => {
       },
       (response) => {
         if (response.didCancel) {
-          Alert.alert('提示', '用户取消了录制');
+          return;
         } else if (response.errorCode) {
           Alert.alert('错误', `录制视频失败: ${response.errorMessage}`);
         } else if (response.assets && response.assets[0].uri) {

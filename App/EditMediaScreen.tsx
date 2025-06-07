@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,44 +6,105 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  useColorScheme,
-  ScrollView,
-  Alert,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  useColorScheme,
+  Alert,
+  ImageBackground,
+  Keyboard,
 } from 'react-native';
 import { TapGestureHandler } from 'react-native-gesture-handler';
 import Video from 'react-native-video';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import ChatScreen from './components/ChatScreen';
+
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 
-const EditMediaScreen: React.FC = ({ route }) => {
+interface RouteParams {
+  mediaUri: string;
+  isVideo: boolean;
+}
+
+interface Props {
+  route: {
+    params: RouteParams;
+  };
+  navigation: any;
+}
+
+interface VideoError {
+  error: {
+    errorString?: string;
+    code?: string;
+    domain?: string;
+  };
+}
+
+const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
   const { mediaUri, isVideo } = route.params;
   const isDarkMode = useColorScheme() === 'dark';
-  const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [textInput, setTextInput] = useState<string>('');
   const [isRecordingMode, setIsRecordingMode] = useState<boolean>(false);
   const [isRecording, setIsRecording] = useState<boolean>(false);
-  const mediaRef = useRef<View>(null);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef(null);
+  const [videoPath, setVideoPath] = useState<string | null>(null);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    flex: 1,
-  };
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+        // 当键盘显示时隐藏底部导航栏
+        navigation.getParent()?.setOptions({
+          tabBarStyle: { display: 'none' }
+        });
+      }
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+        // 当键盘隐藏时显示底部导航栏
+        navigation.getParent()?.setOptions({
+          tabBarStyle: {
+            display: 'flex',
+            height: 60,
+            paddingBottom: 10,
+            paddingTop: 5,
+          }
+        });
+      }
+    );
 
-  const safePadding = '5%';
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+      // 确保在组件卸载时恢复底部导航栏
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          display: 'flex',
+          height: 60,
+          paddingBottom: 10,
+          paddingTop: 5,
+        }
+      });
+    };
+  }, [navigation]);
 
-  const handlePress = (event: any) => {
-    const { x, y } = event.nativeEvent;
-    const mediaWidth = width * 0.9;
-    const mediaHeight = width * 0.6;
-    const scaleX = 1;
-    const scaleY = 1;
-    const relativeX = Math.round(x / scaleX);
-    const relativeY = Math.round(y / scaleY);
-    setClickPosition({ x: relativeX, y: relativeY });
+  const handleSendText = () => {
+    if (textInput.trim()) {
+      // 这里处理发送文本的逻辑
+      // Alert.alert('发送成功', textInput);
+      setTextInput(''); // 发送后清空输入框
+    }
   };
 
   const startRecording = async () => {
@@ -75,90 +136,42 @@ const EditMediaScreen: React.FC = ({ route }) => {
     setIsRecordingMode(!isRecordingMode);
   };
 
+  const handleVideoLoad = (data: any) => {
+    setDuration(data.duration);
+  };
+
+  const handleProgress = (data: any) => {
+    setCurrentTime(data.currentTime);
+  };
+
+  const handleSelectTime = (time: number) => {
+    // Implementation needed
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView style={backgroundStyle}>
-        <View style={[styles.container, { paddingHorizontal: safePadding, paddingBottom: safePadding }]}>
-          <Text style={[styles.title, { color: isDarkMode ? Colors.white : Colors.black }]}>
-            编辑媒体 - 点击显示坐标
-          </Text>
-          <TapGestureHandler
-            onHandlerStateChange={({ nativeEvent }) => {
-              if (nativeEvent.state === 5) {
-                handlePress({ nativeEvent });
-              }
-            }}
-          >
-            <View ref={mediaRef} style={[styles.mediaContainer, { overflow: 'hidden' }]}>
-              {isVideo ? (
-                <Video
-                  source={{ uri: mediaUri }}
-                  style={styles.media}
-                  controls={true}
-                  resizeMode="contain"
-                  onError={(error: any) => {
-                    Alert.alert('错误', `视频播放失败: ${error.error.errorString || error.message}`);
-                  }}
-                />
-              ) : (
-                <Image
-                  source={{ uri: mediaUri }}
-                  style={styles.media}
-                  resizeMode="contain"
-                />
-              )}
-            </View>
-          </TapGestureHandler>
-          {clickPosition && (
-            <Text style={[styles.coordinates, { color: isDarkMode ? Colors.white : Colors.black }]}>
-              点击坐标: X: {clickPosition.x}, Y: {clickPosition.y}
-            </Text>
-          )}
-          {isVideo && (
-            <View style={styles.inputContainer}>
-              <TouchableOpacity onPress={toggleInputMode} style={styles.voiceButton}>
-                <Text style={styles.voiceButtonText}>{isRecordingMode ? '切换到文本' : '切换到语音'}</Text>
-              </TouchableOpacity>
-              {isRecordingMode ? (
-                <TouchableOpacity
-                  style={[styles.recordButton, isRecording && styles.recording]}
-                  onPressIn={startRecording}
-                  onPressOut={stopRecording}
-                >
-                  <Text style={styles.recordButtonText}>
-                    {isRecording ? '松开结束' : '按住说话'}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: isDarkMode ? '#333' : '#FFF',
-                      color: isDarkMode ? Colors.white : Colors.black,
-                      borderColor: isDarkMode ? '#555' : '#CCC',
-                    },
-                  ]}
-                  placeholder="输入文本..."
-                  placeholderTextColor={isDarkMode ? '#888' : '#999'}
-                  value={textInput}
-                  onChangeText={setTextInput}
-                />
-              )}
-            </View>
-          )}
-          {textInput && !isRecordingMode && (
-            <Text style={[styles.textOutput, { color: isDarkMode ? Colors.white : Colors.black }]}>
-              输入内容: {textInput}
-            </Text>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={styles.videoContainer}>
+        {videoPath && (
+          <Video
+            ref={videoRef}
+            source={{ uri: videoPath }}
+            style={styles.video}
+            resizeMode="contain"
+            controls={true}
+          />
+        )}
+      </View>
+      <View style={styles.chatContainer}>
+        <ChatScreen />
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -166,6 +179,29 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  videoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  video: {
+    width: Dimensions.get('window').width,
+    height: 300,
+  },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  contentContainer: {
     flex: 1,
     alignItems: 'center',
   },
@@ -175,25 +211,73 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   mediaContainer: {
-    width: '100%',
+    width: width * 0.95,
+    height: width * 0.65,
+    justifyContent: 'center',
     alignItems: 'center',
   },
+  mediaWrapper: {
+    width: '90%',
+    height: '90%',
+    borderRadius: 10,
+  },
   media: {
-    width: width * 0.9,
-    height: width * 0.6,
+    width: '100%',
+    height: '100%',
     borderRadius: 10,
   },
   coordinates: {
-    fontSize: 18,
-    marginTop: 20,
-    fontWeight: '400',
+    display: 'none', // 隐藏坐标显示样式
+  },
+  bottomContainer: {
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  inputBackground: {
+    width: '100%',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  textInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
     paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
+    backgroundColor: 'transparent',
+  },
+  sendButton: {
+    marginLeft: 8,
+    height: 40,
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
   voiceButton: {
     padding: 10,
@@ -204,13 +288,6 @@ const styles = StyleSheet.create({
   voiceButtonText: {
     color: '#FFF',
     fontSize: 16,
-  },
-  textInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
   },
   recordButton: {
     flex: 1,
@@ -228,10 +305,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  textOutput: {
-    fontSize: 18,
-    marginTop: 10,
-    fontWeight: '400',
+  frameSliderContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 
