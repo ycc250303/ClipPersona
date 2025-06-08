@@ -84,83 +84,80 @@ const ChatScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            <ImageBackground
-                source={require('../Images/chat_background.png')}
-                style={styles.background}
-                resizeMode="cover"
-            >
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => <ChatMessage message={item} />}
-                    style={styles.messagesContainer}
-                    contentContainerStyle={styles.messagesContent}
-                />
+            <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <ChatMessage message={item} />}
+                style={styles.messagesContainer}
+                contentContainerStyle={styles.messagesContent}
+            />
 
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
-                    style={styles.inputContainer}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+                style={styles.inputContainer}
+            >
+                <TouchableOpacity
+                    onPress={toggleInputMode}
+                    style={styles.modeButton}
                 >
-                    <TouchableOpacity
-                        onPress={toggleInputMode}
-                        style={styles.modeButton}
+                    <ImageBackground
+                        source={require('../../Images/EditMediaScreen/mac_background.png')}
+                        style={styles.modeIconBackground}
+                        resizeMode="cover"
                     >
                         <Image
                             source={isRecordingMode ?
-                                require('../Images/keyboard.png') :
-                                require('../Images/microphone.png')
+                                require('../../Images/EditMediaScreen/send_instruction_background.png') : // keyboard.png
+                                require('../../Images/EditMediaScreen/mac.png')
                             }
                             style={styles.modeIcon}
                         />
-                    </TouchableOpacity>
+                    </ImageBackground>
+                </TouchableOpacity>
 
-                    {isRecordingMode ? (
-                        <TouchableOpacity
-                            style={[styles.recordButton, isRecording && styles.recording]}
-                            onPressIn={startRecording}
-                            onPressOut={stopRecording}
-                        >
-                            <Text style={styles.recordButtonText}>
-                                {isRecording ? '松开结束' : '按住说话'}
-                            </Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <>
-                            <View style={styles.textInputContainer}>
-                                <TextInput
-                                    style={styles.input}
-                                    value={inputText}
-                                    onChangeText={setInputText}
-                                    placeholder="输入指令..."
-                                    placeholderTextColor="#999"
-                                    multiline
+                {isRecordingMode ? (
+                    <TouchableOpacity
+                        style={[styles.recordButton, isRecording && styles.recording]}
+                        onPressIn={startRecording}
+                        onPressOut={stopRecording}
+                    >
+                        <Text style={styles.recordButtonText}>
+                            {isRecording ? '松开结束' : '按住说话'}
+                        </Text>
+                    </TouchableOpacity>
+                ) : (
+                    <>
+                        <View style={styles.textInputContainer}>
+                            <TextInput
+                                style={styles.input}
+                                value={inputText}
+                                onChangeText={setInputText}
+                                placeholder="输入指令..."
+                                placeholderTextColor="#999"
+                                multiline
+                            />
+                            <TouchableOpacity
+                                style={styles.sendButton}
+                                onPress={handleSend}
+                                disabled={!inputText.trim()}
+                            >
+                                <Image
+                                    source={require('../../Images/EditMediaScreen/send_instruction.png')}
+                                    style={styles.sendIcon}
                                 />
-                                <TouchableOpacity
-                                    style={styles.sendButton}
-                                    onPress={handleSend}
-                                    disabled={!inputText.trim()}
-                                >
-                                    <Image
-                                        source={require('../Images/send.png')}
-                                        style={styles.sendIcon}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </>
-                    )}
-                </KeyboardAvoidingView>
-            </ImageBackground>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+            </KeyboardAvoidingView>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-    },
-    background: {
         flex: 1,
     },
     messagesContainer: {
@@ -195,7 +192,12 @@ const styles = StyleSheet.create({
     modeIcon: {
         width: 24,
         height: 24,
-        tintColor: '#fff',
+    },
+    modeIconBackground: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     sendButton: {
         marginLeft: 8,

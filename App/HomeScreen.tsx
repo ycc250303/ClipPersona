@@ -8,7 +8,7 @@ const TempPersonaScreen = () => (
     resizeMode="cover"
   >
     <View style={styles.overlay}>
-      <Text style={styles.title}>Persona页面</Text>
+      <Text style={styles.title}>主页页面</Text>
       <Text style={styles.subtitle}>功能开发中...</Text>
     </View>
   </ImageBackground>

@@ -6,11 +6,11 @@ import {
   Text,
   useColorScheme,
   View,
-  Button,
-  Image,
   Alert,
   Dimensions,
   TouchableOpacity,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import Video from 'react-native-video';
@@ -119,13 +119,16 @@ const MediaPickerScreen: React.FC = () => {
     setIsVideo(false);
   };
 
-  //    <Button title="选择图片" onPress={pickImage} color={isDarkMode ? '#1E90FF' : '#007AFF'} /> 
-  //    <Button title="拍摄照片" onPress={capturePhoto} color={isDarkMode ? '#1E90FF' : '#007AFF'} />
   return (
-    <View style={backgroundStyle}>
+    <ImageBackground
+      source={require('../Images/background.png')} // 修改为你实际的背景图片路径
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor="transparent"
+        translucent
       />
       <ScrollView style={backgroundStyle}>
         <View style={[styles.container, { paddingHorizontal: safePadding, paddingBottom: safePadding }]}>
@@ -135,26 +138,21 @@ const MediaPickerScreen: React.FC = () => {
           <View style={styles.buttonContainer}>
             <View style={styles.buttonWrapper}>
               <TouchableOpacity
-                style={[
-                  styles.customButton,
-                  { width: buttonWidth }
-                ]}
+                style={[styles.customButton, { width: buttonWidth }]}
                 onPress={pickVideo}
               >
                 <Text style={styles.buttonText}>选择视频</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[
-                  styles.customButton,
-                  { width: buttonWidth }
-                ]}
+                style={[styles.customButton, { width: buttonWidth }]}
                 onPress={captureVideo}
               >
                 <Text style={styles.buttonText}>录制视频</Text>
               </TouchableOpacity>
             </View>
           </View>
+
           {mediaUri && (
             <>
               <View style={styles.mediaContainer}>
@@ -180,7 +178,7 @@ const MediaPickerScreen: React.FC = () => {
                 <TouchableOpacity
                   style={[
                     styles.customButton,
-                    { backgroundColor: isDarkMode ? '#1E90FF' : '#007AFF' }
+                    { backgroundColor: isDarkMode ? '#1E90FF' : '#007AFF' },
                   ]}
                   onPress={handleEditPress}
                 >
@@ -189,7 +187,7 @@ const MediaPickerScreen: React.FC = () => {
                 <TouchableOpacity
                   style={[
                     styles.customButton,
-                    { backgroundColor: isDarkMode ? '#FF4444' : '#FF3B30' }
+                    { backgroundColor: isDarkMode ? '#FF4444' : '#FF3B30' },
                   ]}
                   onPress={handleClearMedia}
                 >
@@ -200,7 +198,7 @@ const MediaPickerScreen: React.FC = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 };
 
@@ -210,6 +208,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 24,

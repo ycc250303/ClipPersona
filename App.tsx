@@ -10,11 +10,12 @@ import TempProjectScreen from './App/TempProjectScreen';
 import PersonaScreen from './App/PersonaScreen';
 import CommunityScreen from './App/CommunityScreen';
 import SettingsScreen from './App/SettingsScreen';
+import HomeScreen from './App/HomeScreen';
 import { Text, View, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 
 type RootStackParamList = {
   HomeTab: undefined;
-  EditMedia: undefined;
+  EditMedia: { mediaUri: string; isVideo: boolean; };
   MediaPicker: undefined;
   Projects: undefined;
   Persona: undefined;
@@ -44,12 +45,13 @@ const HomeStack = () => (
     <Stack.Screen
       name="MediaPicker"
       component={MediaPickerScreen}
-      options={{ title: '选择媒体', headerShown: false }}
+      options={{ headerShown: false,
+          headerTransparent: true,}}
     />
     <Stack.Screen
       name="EditMedia"
       component={EditMediaScreen}
-      options={{ title: '项目编辑' }}
+      options={{ title: '项目编辑',headerTransparent: true }}
     />
   </Stack.Navigator>
 );
@@ -81,19 +83,17 @@ const App: React.FC = () => {
                 paddingBottom: 10,
                 paddingTop: 5,
                 backgroundColor: 'transparent',
+                zIndex: 999,
               },
               tabBarLabelStyle: {
                 fontSize: 12,
               },
               headerShown: false,
-              contentStyle: {
-                backgroundColor: 'transparent',
-              },
             }}
           >
             <Tab.Screen
               name="HomeTab"
-              component={() => <PlaceholderScreen name="主页" />}
+              component={HomeScreen}
               options={{
                 title: '主页',
                 tabBarIcon: ({ color }) => (
@@ -114,7 +114,7 @@ const App: React.FC = () => {
             />
             <Tab.Screen
               name="Persona"
-              component={() => <PlaceholderScreen name="Persona" />}
+              component={PersonaScreen}
               options={{
                 title: 'Persona',
                 tabBarIcon: ({ color }) => (
@@ -124,7 +124,7 @@ const App: React.FC = () => {
             />
             <Tab.Screen
               name="Community"
-              component={() => <PlaceholderScreen name="社区" />}
+              component={CommunityScreen}
               options={{
                 title: '社区',
                 tabBarIcon: ({ color }) => (
@@ -134,7 +134,7 @@ const App: React.FC = () => {
             />
             <Tab.Screen
               name="Settings"
-              component={() => <PlaceholderScreen name="设置" />}
+              component={SettingsScreen}
               options={{
                 title: '设置',
                 tabBarIcon: ({ color }) => (
