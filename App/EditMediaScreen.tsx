@@ -54,8 +54,15 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [videoRenderedHeight, setVideoRenderedHeight] = useState(0);
   const videoRef = useRef(null);
   const [videoPath, setVideoPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isVideo) {
+      setVideoPath(mediaUri);
+    }
+  }, [mediaUri, isVideo]);
 
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(
@@ -152,26 +159,47 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
     setIsPlaying(!isPlaying);
   };
 
+  const handleMediaLayout = (event: any) => {
+    const { height } = event.nativeEvent.layout;
+    setVideoRenderedHeight(height);
+  };
+
   return (
-    <KeyboardAvoidingView
+    <ImageBackground
+      source={require('../Images/background.png')}
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      resizeMode="cover"
     >
-      <View style={styles.videoContainer}>
-        {videoPath && (
-          <Video
-            ref={videoRef}
-            source={{ uri: videoPath }}
-            style={styles.video}
-            resizeMode="contain"
-            controls={true}
-          />
-        )}
-      </View>
-      <View style={styles.chatContainer}>
-        <ChatScreen />
-      </View>
-    </KeyboardAvoidingView>
+      <KeyboardAvoidingView
+        style={styles.innerContainer}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+
+          {isVideo && videoPath && (
+            <Video
+              ref={videoRef}
+              source={{ uri: videoPath }}
+              style={styles.video}
+              resizeMode="contain"
+              controls={true}
+              onLoad={handleVideoLoad}
+              onProgress={handleProgress}
+              onLayout={handleMediaLayout}
+            />
+          )}
+          {!isVideo && (
+            <Image
+              source={{ uri: mediaUri }}
+              style={styles.video}
+              resizeMode="contain"
+              onLayout={handleMediaLayout}
+            />
+          )}
+        <View style={styles.chatContainer}>
+          <ChatScreen />
+        </View>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 };
 
@@ -180,10 +208,12 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+  },
+  innerContainer: {
+    flex: 1,
   },
   videoContainer: {
-    flex: 1,
+    width: width,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -193,7 +223,6 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',

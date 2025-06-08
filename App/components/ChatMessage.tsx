@@ -43,7 +43,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                         onPress={handlePlayAudio}
                     >
                         <Image
-                            source={require('../Images/play.png')}
+                            source={require('../../Images/EditMediaScreen/send_instruction.png')}// 加语音图片
                             style={styles.playIcon}
                         />
                         <Text style={styles.audioText}>点击播放语音</Text>
@@ -59,7 +59,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             </View>
             {message.isUser && (
                 <Image
-                    source={require('../Images/avatar.png')}
+                    source={require('../../Images/EditMediaScreen/user_image.png')}
                     style={styles.avatar}
                 />
             )}
