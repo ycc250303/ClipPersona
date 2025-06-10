@@ -98,59 +98,71 @@ const ChatScreen: React.FC = () => {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
                 style={styles.inputContainer}
             >
-                <TouchableOpacity
-                    onPress={toggleInputMode}
-                    style={styles.modeButton}
+                <ImageBackground
+                    source={require('../../Images/EditMediaScreen/text_and_audio_background.png')}
+                    style={styles.inputBackground}
+                    resizeMode="stretch"
                 >
-                    <ImageBackground
-                        source={require('../../Images/EditMediaScreen/mac_background.png')}
-                        style={styles.modeIconBackground}
-                        resizeMode="cover"
-                    >
-                        <Image
-                            source={isRecordingMode ?
-                                require('../../Images/EditMediaScreen/send_instruction_background.png') : // keyboard.png
-                                require('../../Images/EditMediaScreen/mac.png')
-                            }
-                            style={styles.modeIcon}
-                        />
-                    </ImageBackground>
-                </TouchableOpacity>
-
-                {isRecordingMode ? (
-                    <TouchableOpacity
-                        style={[styles.recordButton, isRecording && styles.recording]}
-                        onPressIn={startRecording}
-                        onPressOut={stopRecording}
-                    >
-                        <Text style={styles.recordButtonText}>
-                            {isRecording ? '松开结束' : '按住说话'}
-                        </Text>
-                    </TouchableOpacity>
-                ) : (
-                    <>
-                        <View style={styles.textInputContainer}>
-                            <TextInput
-                                style={styles.input}
-                                value={inputText}
-                                onChangeText={setInputText}
-                                placeholder="输入指令..."
-                                placeholderTextColor="#999"
-                                multiline
-                            />
-                            <TouchableOpacity
-                                style={styles.sendButton}
-                                onPress={handleSend}
-                                disabled={!inputText.trim()}
+                    <View style={styles.inputWrapper}>
+                        <TouchableOpacity
+                            onPress={toggleInputMode}
+                            style={styles.modeButton}
+                        >
+                            <ImageBackground
+                                source={require('../../Images/EditMediaScreen/send_instruction_background.png')}
+                                style={styles.modeIconBackground}
+                                resizeMode="cover"
                             >
                                 <Image
-                                    source={require('../../Images/EditMediaScreen/send_instruction.png')}
-                                    style={styles.sendIcon}
+                                    source={isRecordingMode ?
+                                        require('../../Images/EditMediaScreen/send_instruction_background.png') :
+                                        require('../../Images/EditMediaScreen/mac.png')
+                                    }
+                                    style={styles.modeIcon}
                                 />
+                            </ImageBackground>
+                        </TouchableOpacity>
+                        {isRecordingMode ? (
+                            <TouchableOpacity
+                                style={[styles.recordButton, isRecording && styles.recording]}
+                                onPressIn={startRecording}
+                                onPressOut={stopRecording}
+                            >
+                                <Text style={styles.recordButtonText}>
+                                    {isRecording ? '松开结束' : '按住说话'}
+                                </Text>
                             </TouchableOpacity>
-                        </View>
-                    </>
-                )}
+                        ) : (
+                            <View style={styles.textInputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    value={inputText}
+                                    onChangeText={setInputText}
+                                    placeholder="输入指令..."
+                                    placeholderTextColor="#999"
+                                    multiline
+                                />
+                                <TouchableOpacity
+                                    style={styles.sendButton}
+                                    onPress={handleSend}
+                                    disabled={!inputText.trim()}
+                                >
+                                    <ImageBackground
+                                        source={require('../../Images/EditMediaScreen/send_instruction_background.png')}
+                                        style={styles.modeIconBackground}
+                                        resizeMode="cover" >
+                                        <Image
+                                            source={
+                                                require('../../Images/EditMediaScreen/send_instruction.png')}
+                                            style={styles.sendIcon}
+                                        />
+                                    </ImageBackground>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                    </View>
+                </ImageBackground>
             </KeyboardAvoidingView>
         </View>
     );
@@ -167,16 +179,29 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
     },
     inputContainer: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
     },
-    textInputContainer: {
+    inputBackground: {
+        width: '100%',
+        height: 60,
+        minHeight: 60,
+        justifyContent: 'center',
+    },
+    inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1A1A1A',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+    },
+    textInputContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
         borderRadius: 20,
         paddingHorizontal: 15,
-        marginTop: 10,
+        marginRight: 10,
     },
     input: {
         flex: 1,
@@ -186,18 +211,18 @@ const styles = StyleSheet.create({
         maxHeight: 100,
     },
     modeButton: {
-        padding: 8,
-        marginRight: 8,
-    },
-    modeIcon: {
-        width: 24,
-        height: 24,
-    },
-    modeIconBackground: {
-        width: 40,
-        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    modeIconBackground: {
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modeIcon: {
+        width: 32,
+        height: 32,
     },
     sendButton: {
         marginLeft: 8,
@@ -211,11 +236,11 @@ const styles = StyleSheet.create({
     },
     recordButton: {
         flex: 1,
-        backgroundColor: '#333',
+        backgroundColor: 'transparent',
         borderRadius: 20,
         paddingVertical: 12,
         alignItems: 'center',
-        marginHorizontal: 8,
+        marginRight: 10,
     },
     recording: {
         backgroundColor: '#444',

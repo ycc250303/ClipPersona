@@ -106,38 +106,38 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
     };
   }, [navigation]);
 
-  const handleSendText = () => {
-    if (textInput.trim()) {
-      // 这里处理发送文本的逻辑
-      // Alert.alert('发送成功', textInput);
-      setTextInput(''); // 发送后清空输入框
-    }
-  };
+  // const handleSendText = () => {
+  //   if (textInput.trim()) {
+  //     // 这里处理发送文本的逻辑
+  //     // Alert.alert('发送成功', textInput);
+  //     setTextInput(''); // 发送后清空输入框
+  //   }
+  // };
 
-  const startRecording = async () => {
-    try {
-      setIsRecording(true);
-      await audioRecorderPlayer.startRecorder();
-      audioRecorderPlayer.addRecordBackListener((e) => {
-        // 可以在这里处理录音进度
-      });
-    } catch (error) {
-      Alert.alert('错误', `录音失败: ${error.message}`);
-      setIsRecording(false);
-    }
-  };
+  // const startRecording = async () => {
+  //   try {
+  //     setIsRecording(true);
+  //     await audioRecorderPlayer.startRecorder();
+  //     audioRecorderPlayer.addRecordBackListener((e) => {
+  //       // 可以在这里处理录音进度
+  //     });
+  //   } catch (error) {
+  //     Alert.alert('错误', `录音失败: ${error.message}`);
+  //     setIsRecording(false);
+  //   }
+  // };
 
-  const stopRecording = async () => {
-    try {
-      const result = await audioRecorderPlayer.stopRecorder();
-      audioRecorderPlayer.removeRecordBackListener();
-      setIsRecording(false);
-      Alert.alert('提示', `录音已保存: ${result}`);
-    } catch (error) {
-      Alert.alert('错误', `停止录音失败: ${error.message}`);
-      setIsRecording(false);
-    }
-  };
+  // const stopRecording = async () => {
+  //   try {
+  //     const result = await audioRecorderPlayer.stopRecorder();
+  //     audioRecorderPlayer.removeRecordBackListener();
+  //     setIsRecording(false);
+  //     Alert.alert('提示', `录音已保存: ${result}`);
+  //   } catch (error) {
+  //     Alert.alert('错误', `停止录音失败: ${error.message}`);
+  //     setIsRecording(false);
+  //   }
+  // };
 
   const toggleInputMode = () => {
     setIsRecordingMode(!isRecordingMode);
@@ -174,27 +174,35 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
         style={styles.innerContainer}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        <View style={styles.videoContainer}>
+          <ImageBackground
+            source={require('../Images/EditMediaScreen/show_video.png')}
+            style={styles.videoFrame}
+            resizeMode="stretch"
+          >
+            {isVideo && videoPath && (
+              <Video
+                ref={videoRef}
+                source={{ uri: videoPath }}
+                style={styles.video}
+                resizeMode="contain"
+                controls={true}
+                onLoad={handleVideoLoad}
+                onProgress={handleProgress}
+                onLayout={handleMediaLayout}
+              />
+            )}
+            {!isVideo && (
+              <Image
+                source={{ uri: mediaUri }}
+                style={styles.video}
+                resizeMode="contain"
+                onLayout={handleMediaLayout}
+              />
+            )}
+          </ImageBackground>
+        </View>
 
-          {isVideo && videoPath && (
-            <Video
-              ref={videoRef}
-              source={{ uri: videoPath }}
-              style={styles.video}
-              resizeMode="contain"
-              controls={true}
-              onLoad={handleVideoLoad}
-              onProgress={handleProgress}
-              onLayout={handleMediaLayout}
-            />
-          )}
-          {!isVideo && (
-            <Image
-              source={{ uri: mediaUri }}
-              style={styles.video}
-              resizeMode="contain"
-              onLayout={handleMediaLayout}
-            />
-          )}
         <View style={styles.chatContainer}>
           <ChatScreen />
         </View>
@@ -211,15 +219,26 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     flex: 1,
+    paddingTop: 20,
   },
   videoContainer: {
     width: width,
+    height: width * 0.6, // 调整高度比例
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  videoFrame: {
+    marginTop: 80,
+    width: width * 0.95, // 视频框宽度为屏幕宽度的95%
+    height: width * 0.5, // 保持合适的宽高比
+    justifyContent: 'center',
+    alignItems: 'center',
+
   },
   video: {
-    width: Dimensions.get('window').width,
-    height: 300,
+    width: width * 0.85, // 视频宽度略小于框架
+    height: width * 0.48, // 保持视频的宽高比
   },
   chatContainer: {
     flex: 1,
