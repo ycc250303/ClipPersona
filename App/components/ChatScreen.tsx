@@ -8,7 +8,6 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    Dimensions,
     ImageBackground,
     Image,
     FlatList,
@@ -19,40 +18,42 @@ interface Message {
     id: string;
     text: string;
     isUser: boolean;
-    type: 'text' | 'audio';
+    type: 'text' | 'audio' | 'preview';
     audioPath?: string;
+    videoPath?: string;
+    onSave?: () => Promise<void>;
+    onDiscard?: () => Promise<void>;
+    onPreview?: () => void;
 }
 
-const ChatScreen: React.FC = () => {
-    const [messages, setMessages] = useState<Message[]>([]);
+interface ChatScreenProps {
+    onSendCommand: (command: string) => void;
+    disabled?: boolean;
+    messages: Array<Message>;
+    setMessages: React.Dispatch<React.SetStateAction<Array<Message>>>;
+}
+
+const ChatScreen: React.FC<ChatScreenProps> = ({ onSendCommand, disabled = false, messages, setMessages }) => {
     const [inputText, setInputText] = useState('');
     const [isRecordingMode, setIsRecordingMode] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const scrollViewRef = useRef<ScrollView>(null);
     const flatListRef = useRef<FlatList>(null);
 
     const handleSend = () => {
-        if (inputText.trim()) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                text: inputText.trim(),
-                isUser: true,
-                type: 'text',
-            };
-            setMessages(prev => [...prev, newMessage]);
-            setInputText('');
-
-            // 模拟系统回复
-            setTimeout(() => {
-                const replyMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    text: '我已经收到你的指令，正在处理中...',
-                    isUser: false,
-                    type: 'text',
-                };
-                setMessages(prev => [...prev, replyMessage]);
-            }, 1000);
+        if (disabled || !inputText.trim()) {
+            return;
         }
+
+        const userMessage = {
+            id: Date.now().toString(),
+            text: inputText.trim(),
+            isUser: true,
+            type: 'text' as const,
+        };
+        setMessages(prev => [...prev, userMessage]);
+
+        onSendCommand(inputText.trim());
+        setInputText('');
     };
 
     const toggleInputMode = () => {
@@ -61,12 +62,10 @@ const ChatScreen: React.FC = () => {
 
     const startRecording = () => {
         setIsRecording(true);
-        // 实现录音逻辑
     };
 
     const stopRecording = () => {
         setIsRecording(false);
-        // 实现停止录音逻辑
         const newMessage: Message = {
             id: Date.now().toString(),
             text: '[语音消息]',
@@ -78,7 +77,7 @@ const ChatScreen: React.FC = () => {
 
     useEffect(() => {
         if (messages.length > 0) {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
+            flatListRef.current?.scrollToEnd({ animated: true });
         }
     }, [messages]);
 
@@ -88,7 +87,16 @@ const ChatScreen: React.FC = () => {
                 ref={flatListRef}
                 data={messages}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <ChatMessage message={item} />}
+                renderItem={({ item }) => (
+                    <ChatMessage
+                        message={{
+                            ...item,
+                            onSave: item.onSave,
+                            onPreview: item.onPreview,
+                            onDiscard: item.onDiscard,
+                        }}
+                    />
+                )}
                 style={styles.messagesContainer}
                 contentContainerStyle={styles.messagesContent}
             />
@@ -110,18 +118,19 @@ const ChatScreen: React.FC = () => {
                         >
                             <ImageBackground
                                 source={require('../../Images/EditMediaScreen/send_instruction_background.png')}
-                                style={styles.modeIconBackground}
+                                style={styles.iconBackground}
                                 resizeMode="cover"
                             >
                                 <Image
                                     source={isRecordingMode ?
-                                        require('../../Images/EditMediaScreen/send_instruction_background.png') :
+                                        require('../../Images/EditMediaScreen/mac.png') :
                                         require('../../Images/EditMediaScreen/mac.png')
                                     }
                                     style={styles.modeIcon}
                                 />
                             </ImageBackground>
                         </TouchableOpacity>
+
                         {isRecordingMode ? (
                             <TouchableOpacity
                                 style={[styles.recordButton, isRecording && styles.recording]}
@@ -135,32 +144,38 @@ const ChatScreen: React.FC = () => {
                         ) : (
                             <View style={styles.textInputContainer}>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[
+                                        styles.input,
+                                        disabled && styles.inputDisabled
+                                    ]}
                                     value={inputText}
                                     onChangeText={setInputText}
-                                    placeholder="输入指令..."
-                                    placeholderTextColor="#999"
+                                    placeholder={disabled ? "请等待视频上传完成..." : "输入编辑指令..."}
+                                    placeholderTextColor={disabled ? "#666" : "#666"}
                                     multiline
+                                    editable={!disabled}
                                 />
                                 <TouchableOpacity
-                                    style={styles.sendButton}
+                                    style={[
+                                        styles.sendButton,
+                                        (!inputText.trim() || disabled) && styles.sendButtonDisabled
+                                    ]}
                                     onPress={handleSend}
-                                    disabled={!inputText.trim()}
+                                    disabled={!inputText.trim() || disabled}
                                 >
                                     <ImageBackground
                                         source={require('../../Images/EditMediaScreen/send_instruction_background.png')}
-                                        style={styles.modeIconBackground}
-                                        resizeMode="cover" >
+                                        style={styles.iconBackground}
+                                        resizeMode="cover"
+                                    >
                                         <Image
-                                            source={
-                                                require('../../Images/EditMediaScreen/send_instruction.png')}
+                                            source={require('../../Images/EditMediaScreen/send_instruction.png')}
                                             style={styles.sendIcon}
                                         />
                                     </ImageBackground>
                                 </TouchableOpacity>
                             </View>
                         )}
-
                     </View>
                 </ImageBackground>
             </KeyboardAvoidingView>
@@ -206,17 +221,11 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 14,
         paddingVertical: 10,
         maxHeight: 100,
     },
     modeButton: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modeIconBackground: {
-        width: 50,
-        height: 50,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -248,6 +257,19 @@ const styles = StyleSheet.create({
     recordButtonText: {
         color: '#fff',
         fontSize: 16,
+    },
+    inputDisabled: {
+        backgroundColor: '#f0f0f0',
+        color: '#999',
+    },
+    sendButtonDisabled: {
+        opacity: 0.5,
+    },
+    iconBackground: {
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

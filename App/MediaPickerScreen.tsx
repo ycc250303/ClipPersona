@@ -11,17 +11,34 @@ import {
   TouchableOpacity,
   Image,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import Video from 'react-native-video';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+
+// API配置
+const API_CONFIG = {
+  BASE_URL: 'http://139.224.33.240:8000',
+  ENDPOINTS: {
+    UPLOAD_VIDEO: '/upload-video',
+  }
+};
+
+// 导航参数类型定义
+type RootStackParamList = {
+  EditMedia: {
+    mediaUri: string;
+    isVideo: boolean;
+  };
+};
 
 const MediaPickerScreen: React.FC = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const [mediaUri, setMediaUri] = useState<string | null>(null);
   const [isVideo, setIsVideo] = useState<boolean>(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const screenWidth = Dimensions.get('window').width;
   const buttonWidth = screenWidth * 0.8;
 
@@ -30,28 +47,7 @@ const MediaPickerScreen: React.FC = () => {
     flex: 1,
   };
 
-  const safePadding = '5%';
-
-  const pickImage = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        includeBase64: false,
-      },
-      (response) => {
-        if (response.didCancel) {
-          Alert.alert('提示', '用户取消了选择');
-        } else if (response.errorCode) {
-          Alert.alert('错误', `选择图片失败: ${response.errorMessage}`);
-        } else if (response.assets && response.assets[0].uri) {
-          setMediaUri(response.assets[0].uri);
-          setIsVideo(false);
-        }
-      },
-    );
-  };
-
-  const pickVideo = () => {
+  const pickVideo = async () => {
     launchImageLibrary(
       {
         mediaType: 'video',
@@ -70,26 +66,7 @@ const MediaPickerScreen: React.FC = () => {
     );
   };
 
-  const capturePhoto = () => {
-    launchCamera(
-      {
-        mediaType: 'photo',
-        includeBase64: false,
-      },
-      (response) => {
-        if (response.didCancel) {
-          return;
-        } else if (response.errorCode) {
-          Alert.alert('错误', `拍摄照片失败: ${response.errorMessage}`);
-        } else if (response.assets && response.assets[0].uri) {
-          setMediaUri(response.assets[0].uri);
-          setIsVideo(false);
-        }
-      },
-    );
-  };
-
-  const captureVideo = () => {
+  const captureVideo = async () => {
     launchCamera(
       {
         mediaType: 'video',
@@ -109,9 +86,15 @@ const MediaPickerScreen: React.FC = () => {
   };
 
   const handleEditPress = () => {
-    if (mediaUri) {
-      navigation.navigate('EditMedia', { mediaUri, isVideo });
+    if (!mediaUri) {
+      Alert.alert('提示', '请先选择视频');
+      return;
     }
+
+    navigation.navigate('EditMedia', {
+      mediaUri,
+      isVideo,
+    });
   };
 
   const handleClearMedia = () => {
@@ -121,7 +104,7 @@ const MediaPickerScreen: React.FC = () => {
 
   return (
     <ImageBackground
-      source={require('../Images/background.png')} // 修改为你实际的背景图片路径
+      source={require('../Images/background.png')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
@@ -131,8 +114,8 @@ const MediaPickerScreen: React.FC = () => {
         translucent
       />
       <ScrollView style={backgroundStyle}>
-        <View style={[styles.container, { paddingHorizontal: safePadding, paddingBottom: safePadding }]}>
-          <Text style={[styles.title, { color: isDarkMode ? Colors.white : Colors.black }]}>
+        <View style={[styles.container, { paddingHorizontal: '5%', paddingBottom: '5%' }]}>
+          <Text style={[styles.title, { color: isDarkMode ? Colors.black : Colors.white }]}>
             选择并展示视频素材
           </Text>
           <View style={styles.buttonContainer}>
@@ -176,19 +159,13 @@ const MediaPickerScreen: React.FC = () => {
               </View>
               <View style={styles.actionButtonContainer}>
                 <TouchableOpacity
-                  style={[
-                    styles.customButton,
-                    { backgroundColor: isDarkMode ? '#1E90FF' : '#007AFF' },
-                  ]}
+                  style={[styles.customButton, { backgroundColor: isDarkMode ? '#1E90FF' : '#007AFF' }]}
                   onPress={handleEditPress}
                 >
                   <Text style={styles.buttonText}>进入编辑</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.customButton,
-                    { backgroundColor: isDarkMode ? '#FF4444' : '#FF3B30' },
-                  ]}
+                  style={[styles.customButton, { backgroundColor: isDarkMode ? '#FF4444' : '#FF3B30' }]}
                   onPress={handleClearMedia}
                 >
                   <Text style={styles.buttonText}>重新选择</Text>
@@ -202,8 +179,6 @@ const MediaPickerScreen: React.FC = () => {
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -215,9 +190,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
+    marginTop: 75,
     fontSize: 24,
     fontWeight: '600',
-    marginVertical: 20,
   },
   buttonContainer: {
     width: '100%',
@@ -232,6 +207,8 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: 'rgb(120, 121, 241)',
     borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -246,8 +223,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   media: {
-    width: width * 0.9,
-    height: width * 0.6,
+    width: Dimensions.get('window').width * 0.9,
+    height: Dimensions.get('window').width * 0.6,
     borderRadius: 10,
   },
   actionButtonContainer: {

@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     Image,
-    Dimensions,
     TouchableOpacity,
 } from 'react-native';
 
@@ -12,8 +11,12 @@ interface Message {
     id: string;
     text: string;
     isUser: boolean;
-    type: 'text' | 'audio';
+    type: 'text' | 'audio' | 'preview';
     audioPath?: string;
+    videoPath?: string;
+    onSave?: () => Promise<void>;
+    onDiscard?: () => Promise<void>;
+    onPreview?: () => void;
 }
 
 interface ChatMessageProps {
@@ -23,8 +26,53 @@ interface ChatMessageProps {
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     const handlePlayAudio = () => {
         if (message.type === 'audio' && message.audioPath) {
-            // 实现音频播放逻辑
             console.log('Playing audio:', message.audioPath);
+        }
+    };
+
+    const renderContent = () => {
+        switch (message.type) {
+            case 'audio':
+                return (
+                    <TouchableOpacity
+                        style={styles.audioButton}
+                        onPress={handlePlayAudio}
+                    >
+                        <Image
+                            source={require('../../Images/EditMediaScreen/send_instruction.png')}
+                            style={styles.playIcon}
+                        />
+                        <Text style={styles.audioText}>点击播放语音</Text>
+                    </TouchableOpacity>
+                );
+            case 'preview':
+                return (
+                    <View style={styles.previewContainer}>
+                        <Text style={styles.text}>{message.text}</Text>
+                        <View style={styles.previewButtons}>
+                            <TouchableOpacity
+                                style={[styles.selectButton]}
+                                onPress={() => {
+                                    console.log('ChatMessage: 选择按钮被点击');
+                                    if (message.onPreview) {
+                                        message.onPreview();
+                                    }
+                                }}
+                            >
+                                <Text style={styles.buttonText}>选择</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                );
+            default:
+                return (
+                    <Text style={[
+                        styles.text,
+                        message.isUser ? styles.userText : styles.systemText
+                    ]}>
+                        {message.text}
+                    </Text>
+                );
         }
     };
 
@@ -37,25 +85,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                 styles.bubble,
                 message.isUser ? styles.userBubble : styles.systemBubble
             ]}>
-                {message.type === 'audio' ? (
-                    <TouchableOpacity
-                        style={styles.audioButton}
-                        onPress={handlePlayAudio}
-                    >
-                        <Image
-                            source={require('../../Images/EditMediaScreen/send_instruction.png')}// 加语音图片
-                            style={styles.playIcon}
-                        />
-                        <Text style={styles.audioText}>点击播放语音</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <Text style={[
-                        styles.text,
-                        message.isUser ? styles.userText : styles.systemText
-                    ]}>
-                        {message.text}
-                    </Text>
-                )}
+                {renderContent()}
             </View>
             {message.isUser && (
                 <Image
@@ -95,6 +125,7 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         lineHeight: 20,
+        color: '#fff',
     },
     userText: {
         color: '#fff',
@@ -121,6 +152,27 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
+    },
+    previewContainer: {
+        width: '100%',
+    },
+    previewButtons: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    selectButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 30,
+        borderRadius: 20,
+        backgroundColor: '#4CAF50',
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '500',
     },
 });
 
