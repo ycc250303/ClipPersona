@@ -101,8 +101,8 @@ def init_config() -> Callable:
     Returns:
         Callable: 处理用户单次提问的函数。
     """
-    APP_ID = '2025441492'
-    APP_KEY = 'wXhkzebAEfVscVkg'
+    APP_ID = 'YOUR_BLUE_LLM_APP_ID'
+    APP_KEY = 'YOUR_BLUE_LLM_API_KEY'
     URI = '/vivogpt/completions'
     DOMAIN = 'api-ai.vivo.com.cn'
     METHOD = 'POST'
