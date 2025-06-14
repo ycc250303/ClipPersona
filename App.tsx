@@ -7,9 +7,6 @@ import { RouteProp } from '@react-navigation/native';
 import { Platform, Text, View, ImageBackground, StyleSheet, Dimensions, PermissionsAndroid, Alert, Linking } from 'react-native';
 import MediaPickerScreen from './App/MediaPickerScreen';
 import EditMediaScreen from './App/EditMediaScreen';
-import TempProjectScreen from './App/TempProjectScreen';
-import PersonaScreen from './App/PersonaScreen';
-import CommunityScreen from './App/CommunityScreen';
 import SettingsScreen from './App/SettingsScreen';
 import HomeScreen from './App/HomeScreen';
 import { requestStoragePermissions } from './App/utils/permissionManager';
@@ -19,8 +16,6 @@ type RootStackParamList = {
   EditMedia: { mediaUri: string; isVideo: boolean; };
   MediaPicker: undefined;
   Projects: undefined;
-  Persona: undefined;
-  Community: undefined;
   Settings: undefined;
 };
 
@@ -31,14 +26,6 @@ type EditMediaScreenProps = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootStackParamList>();
-
-// 临时占位组件
-const PlaceholderScreen = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text style={{ fontSize: 24 }}>{name}页面</Text>
-    <Text>功能开发中...</Text>
-  </View>
-);
 
 // 主页堆栈导航器
 const HomeStack = () => (
@@ -200,26 +187,6 @@ const App: React.FC = () => {
                 headerShown: false,
                 tabBarIcon: ({ color }) => (
                   <Text style={{ color, fontSize: 24 }}>📁</Text>
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="Persona"
-              component={PersonaScreen}
-              options={{
-                title: 'Persona',
-                tabBarIcon: ({ color }) => (
-                  <Text style={{ color, fontSize: 24 }}>👤</Text>
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="Community"
-              component={CommunityScreen}
-              options={{
-                title: '社区',
-                tabBarIcon: ({ color }) => (
-                  <Text style={{ color, fontSize: 24 }}>👥</Text>
                 ),
               }}
             />
