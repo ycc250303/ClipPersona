@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,9 @@ import {
     Image,
     TouchableOpacity,
 } from 'react-native';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+
+const audioRecorderPlayer = new AudioRecorderPlayer();
 
 interface Message {
     id: string;
@@ -24,9 +27,29 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
-    const handlePlayAudio = () => {
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const handlePlayAudio = async () => {
         if (message.type === 'audio' && message.audioPath) {
-            console.log('Playing audio:', message.audioPath);
+            try {
+                if (isPlaying) {
+                    await audioRecorderPlayer.stopPlayer();
+                    setIsPlaying(false);
+                } else {
+                    await audioRecorderPlayer.startPlayer(message.audioPath);
+                    setIsPlaying(true);
+                    
+                    // 监听播放完成事件
+                    audioRecorderPlayer.addPlayBackListener((e) => {
+                        if (e.currentPosition === e.duration) {
+                            setIsPlaying(false);
+                            audioRecorderPlayer.stopPlayer();
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('播放音频失败:', error);
+            }
         }
     };
 
@@ -42,7 +65,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                             source={require('../../Images/EditMediaScreen/send_instruction.png')}
                             style={styles.playIcon}
                         />
-                        <Text style={styles.audioText}>点击播放语音</Text>
+                        <Text style={styles.audioText}>
+                            {isPlaying ? '正在播放...' : '点击播放语音'}
+                        </Text>
                     </TouchableOpacity>
                 );
             case 'preview':
