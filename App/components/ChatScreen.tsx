@@ -11,8 +11,12 @@ import {
     ImageBackground,
     Image,
     FlatList,
+    PermissionsAndroid,
+    Alert,
 } from 'react-native';
 import ChatMessage from './ChatMessage';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import RNFS from 'react-native-fs';
 
 interface Message {
     id: string;
@@ -33,10 +37,13 @@ interface ChatScreenProps {
     setMessages: React.Dispatch<React.SetStateAction<Array<Message>>>;
 }
 
+const audioRecorderPlayer = new AudioRecorderPlayer();
+
 const ChatScreen: React.FC<ChatScreenProps> = ({ onSendCommand, disabled = false, messages, setMessages }) => {
     const [inputText, setInputText] = useState('');
     const [isRecordingMode, setIsRecordingMode] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [audioPath, setAudioPath] = useState<string | null>(null);
     const flatListRef = useRef<FlatList>(null);
 
     const handleSend = () => {
@@ -60,19 +67,66 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onSendCommand, disabled = false
         setIsRecordingMode(!isRecordingMode);
     };
 
-    const startRecording = () => {
-        setIsRecording(true);
+    const requestAudioPermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+                    {
+                        title: "录音权限",
+                        message: "需要录音权限才能录制语音消息",
+                        buttonNeutral: "稍后询问",
+                        buttonNegative: "取消",
+                        buttonPositive: "确定"
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } catch (err) {
+                console.warn(err);
+                return false;
+            }
+        }
+        return true;
     };
 
-    const stopRecording = () => {
-        setIsRecording(false);
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            text: '[语音消息]',
-            isUser: true,
-            type: 'audio',
-        };
-        setMessages(prev => [...prev, newMessage]);
+    const startRecording = async () => {
+        const hasPermission = await requestAudioPermission();
+        if (!hasPermission) {
+            Alert.alert('提示', '需要录音权限才能录制语音消息');
+            return;
+        }
+
+        try {
+            const audioPath = `${RNFS.CachesDirectoryPath}/audio_${Date.now()}.mp3`;
+            await audioRecorderPlayer.startRecorder(audioPath);
+            setAudioPath(audioPath);
+            setIsRecording(true);
+        } catch (error) {
+            console.error('开始录音失败:', error);
+            Alert.alert('错误', '开始录音失败');
+        }
+    };
+
+    const stopRecording = async () => {
+        try {
+            const result = await audioRecorderPlayer.stopRecorder();
+            setIsRecording(false);
+            
+            if (audioPath) {
+                const newMessage: Message = {
+                    id: Date.now().toString(),
+                    text: '[语音消息]',
+                    isUser: true,
+                    type: 'audio',
+                    audioPath: audioPath,
+                };
+                setMessages(prev => [...prev, newMessage]);
+                setAudioPath(null);
+            }
+        } catch (error) {
+            console.error('停止录音失败:', error);
+            Alert.alert('错误', '停止录音失败');
+        }
     };
 
     useEffect(() => {
