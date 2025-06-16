@@ -1,15 +1,149 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, Theme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Platform, Text, View, ImageBackground, StyleSheet, Dimensions, PermissionsAndroid, Alert, Linking } from 'react-native';
+import { Platform, Text, View, ImageBackground, StyleSheet, Dimensions, PermissionsAndroid, Alert, Linking, Animated, TouchableOpacity } from 'react-native';
+import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import MediaPickerScreen from './App/MediaPickerScreen';
 import EditMediaScreen from './App/EditMediaScreen';
 import SettingsScreen from './App/SettingsScreen';
 import HomeScreen from './App/HomeScreen';
 import { requestStoragePermissions } from './App/utils/permissionManager';
+import { LanguageProvider, useLanguage } from './App/context/LanguageContext';
+import { UserProvider } from './App/context/UserContext';
+
+// Custom Tab Bar Icons
+const HomeTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
+  const scaleValue = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.spring(scaleValue, {
+      toValue: focused ? 1.2 : 1,
+      friction: 5,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [focused, scaleValue]);
+
+  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>🏠</Animated.Text>;
+};
+
+const ProjectsTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
+  const scaleValue = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.spring(scaleValue, {
+      toValue: focused ? 1.2 : 1,
+      friction: 5,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [focused, scaleValue]);
+
+  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>📁</Animated.Text>;
+};
+
+const SettingsTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
+  const scaleValue = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.spring(scaleValue, {
+      toValue: focused ? 1.2 : 1,
+      friction: 5,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [focused, scaleValue]);
+
+  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>⚙️</Animated.Text>;
+};
+
+// Custom Tab Bar Component
+const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, navigation, position }) => {
+  const { currentLanguage } = useLanguage();
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  return (
+    <ImageBackground
+      source={require('./Images/bottom-tabs.png')}
+      style={styles.tabBarBackground}
+      resizeMode="cover"
+    >
+      <View style={styles.tabBarContainer}>
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
+
+          const icon = options.tabBarIcon ? options.tabBarIcon({ focused: isFocused, color: isFocused ? '#007AFF' : 'gray' }) : null;
+
+          const getLabelText = () => {
+            if (options.tabBarLabel !== undefined) {
+              return typeof options.tabBarLabel === 'string'
+                ? getLocalizedText(
+                    options.tabBarLabel === '主页' ? '主页' : options.tabBarLabel === '剪辑' ? '剪辑' : '设置',
+                    options.tabBarLabel === 'Home' ? 'Home' : options.tabBarLabel === 'Edit' ? 'Edit' : 'Settings'
+                  )
+                : options.tabBarLabel({ focused: isFocused, color: isFocused ? '#007AFF' : 'gray' });
+            } else if (options.title !== undefined) {
+              return typeof options.title === 'string'
+                ? getLocalizedText(
+                    options.title === '主页' ? '主页' : options.title === '剪辑' ? '剪辑' : '设置',
+                    options.title === 'Home' ? 'Home' : options.title === 'Edit' ? 'Edit' : 'Settings'
+                  )
+                : options.title;
+            } else {
+              return getLocalizedText(
+                route.name === 'HomeTab' ? '主页' : route.name === 'Projects' ? '剪辑' : '设置',
+                route.name === 'HomeTab' ? 'Home' : route.name === 'Projects' ? 'Edit' : 'Settings'
+              );
+            }
+          };
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.tabBarItem}
+            >
+              {icon}
+              <Text style={{ color: isFocused ? '#007AFF' : 'gray', fontSize: 12, marginBottom: 3 }}>
+                {getLabelText()}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ImageBackground>
+  );
+};
 
 type RootStackParamList = {
   HomeTab: undefined;
@@ -25,26 +159,105 @@ type EditMediaScreenProps = {
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<RootStackParamList>();
+const Tab = createMaterialTopTabNavigator<RootStackParamList>();
 
 // 主页堆栈导航器
-const HomeStack = () => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="MediaPicker"
-      component={MediaPickerScreen}
-      options={{
+const HomeStack = () => {
+  const { currentLanguage } = useLanguage();
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="MediaPicker"
+        component={MediaPickerScreen}
+        options={{
+          headerShown: false,
+          headerTransparent: true,
+        }}
+      />
+      <Stack.Screen
+        name="EditMedia"
+        component={EditMediaScreen}
+        options={{ title: getLocalizedText('项目编辑', 'Project Edit'), headerTransparent: true, headerTintColor: 'white' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+// 新增：包含底部导航的组件，将在此处使用 useLanguage
+const MainTabs = () => {
+  const { currentLanguage } = useLanguage();
+
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  return (
+    <Tab.Navigator
+      initialRouteName="Projects"
+      tabBarPosition="bottom"
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          height: 65,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 5,
+          elevation: 10,
+          zIndex: 999,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: 3,
+        },
         headerShown: false,
-        headerTransparent: true,
+        tabBarHideOnKeyboard: true,
+        tabBarIndicatorStyle: {
+          opacity: 0,
+        },
       }}
-    />
-    <Stack.Screen
-      name="EditMedia"
-      component={EditMediaScreen}
-      options={{ title: '项目编辑', headerTransparent: true, headerTintColor: 'white' }}
-    />
-  </Stack.Navigator>
-);
+    >
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeScreen}
+        options={{
+          title: getLocalizedText('主页', 'Home'),
+          tabBarIcon: ({ color, focused }) => (
+            <HomeTabIcon color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Projects"
+        component={HomeStack}
+        options={{
+          title: getLocalizedText('剪辑', 'Edit'),
+          tabBarIcon: ({ color, focused }) => (
+            <ProjectsTabIcon color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: getLocalizedText('设置', 'Settings'),
+          tabBarIcon: ({ color, focused }) => (
+            <SettingsTabIcon color={color} focused={focused} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 // 权限请求函数
 const requestPermissions = async () => {
@@ -143,65 +356,13 @@ const App: React.FC = () => {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        <NavigationContainer>
-          <Tab.Navigator
-            initialRouteName="Projects"
-            screenOptions={{
-              tabBarActiveTintColor: '#007AFF',
-              tabBarInactiveTintColor: 'gray',
-              tabBarBackground: () => (
-                <ImageBackground
-                  source={require('./Images/bottom-tabs.png')}
-                  style={{ flex: 1 }}
-                  resizeMode="cover"
-                />
-              ),
-              tabBarStyle: {
-                height: 60,
-                paddingBottom: 10,
-                paddingTop: 5,
-                backgroundColor: 'transparent',
-                zIndex: 999,
-              },
-              tabBarLabelStyle: {
-                fontSize: 12,
-              },
-              headerShown: false,
-            }}
-          >
-            <Tab.Screen
-              name="HomeTab"
-              component={HomeScreen}
-              options={{
-                title: '主页',
-                tabBarIcon: ({ color }) => (
-                  <Text style={{ color, fontSize: 24 }}>🏠</Text>
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="Projects"
-              component={HomeStack}
-              options={{
-                title: '项目',
-                headerShown: false,
-                tabBarIcon: ({ color }) => (
-                  <Text style={{ color, fontSize: 24 }}>📁</Text>
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{
-                title: '设置',
-                tabBarIcon: ({ color }) => (
-                  <Text style={{ color, fontSize: 24 }}>⚙️</Text>
-                ),
-              }}
-            />
-          </Tab.Navigator>
-        </NavigationContainer>
+        <LanguageProvider>
+          <UserProvider>
+            <NavigationContainer>
+              <MainTabs />
+            </NavigationContainer>
+          </UserProvider>
+        </LanguageProvider>
       </ImageBackground>
     </View>
   );
@@ -215,6 +376,36 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+  },
+  tabBarBackground: {
+    height: 65,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10,
+    zIndex: 999,
+  },
+  tabBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  tabBarItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
   },
 });
 
