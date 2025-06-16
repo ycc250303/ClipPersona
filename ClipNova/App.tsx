@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer, Theme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Platform, Text, View, ImageBackground, StyleSheet, Dimensions, PermissionsAndroid, Alert, Linking, Animated, TouchableOpacity } from 'react-native';
-import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import { Platform, Text, View, ImageBackground, StyleSheet, Dimensions, PermissionsAndroid, Alert, Linking, TouchableOpacity, Image } from 'react-native';
 import MediaPickerScreen from './App/MediaPickerScreen';
 import EditMediaScreen from './App/EditMediaScreen';
 import SettingsScreen from './App/SettingsScreen';
@@ -14,57 +13,35 @@ import { requestStoragePermissions } from './App/utils/permissionManager';
 import { LanguageProvider, useLanguage } from './App/context/LanguageContext';
 import { UserProvider } from './App/context/UserContext';
 
-// Custom Tab Bar Icons
-const HomeTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
-  const scaleValue = React.useRef(new Animated.Value(1)).current;
-
-  React.useEffect(() => {
-    Animated.spring(scaleValue, {
-      toValue: focused ? 1.2 : 1,
-      friction: 5,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  }, [focused, scaleValue]);
-
-  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>🏠</Animated.Text>;
+// 定义路由参数类型
+type RootStackParamList = {
+  HomeTab: undefined;
+  EditMedia: { mediaUri: string; isVideo: boolean; };
+  MediaPicker: undefined;
+  Projects: undefined;
+  Settings: undefined;
 };
 
-const ProjectsTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
-  const scaleValue = React.useRef(new Animated.Value(1)).current;
-
-  React.useEffect(() => {
-    Animated.spring(scaleValue, {
-      toValue: focused ? 1.2 : 1,
-      friction: 5,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  }, [focused, scaleValue]);
-
-  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>📁</Animated.Text>;
+type EditMediaScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'EditMedia'>;
+  route: RouteProp<RootStackParamList, 'EditMedia'>;
 };
 
-const SettingsTabIcon = ({ focused, color }: { focused: boolean; color: string }) => {
-  const scaleValue = React.useRef(new Animated.Value(1)).current;
+const Tab = createMaterialTopTabNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
-  React.useEffect(() => {
-    Animated.spring(scaleValue, {
-      toValue: focused ? 1.2 : 1,
-      friction: 5,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  }, [focused, scaleValue]);
-
-  return <Animated.Text style={{ color, fontSize: 24, fontWeight: focused ? 'bold' : 'normal', transform: [{ scale: scaleValue }] }}>⚙️</Animated.Text>;
-};
-
-// Custom Tab Bar Component
+// 自定义底部导航栏
 const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, navigation, position }) => {
   const { currentLanguage } = useLanguage();
+
   const getLocalizedText = (zhText: string, enText: string) => {
     return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  const getLabelText = (options: any, route: any) => {
+    return options.title !== undefined
+      ? options.title
+      : route.name;
   };
 
   return (
@@ -76,7 +53,7 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
       <View style={styles.tabBarContainer}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
-
+          const label = getLabelText(options, route);
           const isFocused = state.index === index;
 
           const onPress = () => {
@@ -98,34 +75,11 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
             });
           };
 
-          const icon = options.tabBarIcon ? options.tabBarIcon({ focused: isFocused, color: isFocused ? '#007AFF' : 'gray' }) : null;
-
-          const getLabelText = () => {
-            if (options.tabBarLabel !== undefined) {
-              return typeof options.tabBarLabel === 'string'
-                ? getLocalizedText(
-                  options.tabBarLabel === '主页' ? '主页' : options.tabBarLabel === '剪辑' ? '剪辑' : '设置',
-                  options.tabBarLabel === 'Home' ? 'Home' : options.tabBarLabel === 'Edit' ? 'Edit' : 'Settings'
-                )
-                : options.tabBarLabel({ focused: isFocused, color: isFocused ? '#007AFF' : 'gray' });
-            } else if (options.title !== undefined) {
-              return typeof options.title === 'string'
-                ? getLocalizedText(
-                  options.title === '主页' ? '主页' : options.title === '剪辑' ? '剪辑' : '设置',
-                  options.title === 'Home' ? 'Home' : options.title === 'Edit' ? 'Edit' : 'Settings'
-                )
-                : options.title;
-            } else {
-              return getLocalizedText(
-                route.name === 'HomeTab' ? '主页' : route.name === 'Projects' ? '剪辑' : '设置',
-                route.name === 'HomeTab' ? 'Home' : route.name === 'Projects' ? 'Edit' : 'Settings'
-              );
-            }
-          };
+          const icon = options.tabBarIcon ? options.tabBarIcon({ focused: isFocused, color: isFocused ? '#FFFFFF' : '#B0B0B0' }) : null;
 
           return (
             <TouchableOpacity
-              key={route.key}
+              key={route.key} // Add key for list rendering
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -135,7 +89,7 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
             >
               {icon}
               <Text style={{ color: isFocused ? '#007AFF' : 'gray', fontSize: 12, marginBottom: 3 }}>
-                {getLabelText()}
+                {label}
               </Text>
             </TouchableOpacity>
           );
@@ -145,25 +99,9 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
   );
 };
 
-type RootStackParamList = {
-  HomeTab: undefined;
-  EditMedia: { mediaUri: string; isVideo: boolean; };
-  MediaPicker: undefined;
-  Projects: undefined;
-  Settings: undefined;
-};
-
-type EditMediaScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, 'EditMedia'>;
-  route: RouteProp<RootStackParamList, 'EditMedia'>;
-};
-
-const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createMaterialTopTabNavigator<RootStackParamList>();
-
-// 主页堆栈导航器
 const HomeStack = () => {
   const { currentLanguage } = useLanguage();
+
   const getLocalizedText = (zhText: string, enText: string) => {
     return currentLanguage === 'zh' ? zhText : enText;
   };
@@ -173,21 +111,17 @@ const HomeStack = () => {
       <Stack.Screen
         name="MediaPicker"
         component={MediaPickerScreen}
-        options={{
-          headerShown: false,
-          headerTransparent: true,
-        }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="EditMedia"
         component={EditMediaScreen}
-        options={{ title: getLocalizedText('项目编辑', 'Project Edit'), headerTransparent: true, headerTintColor: 'white' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
 };
 
-// 新增：包含底部导航的组件，将在此处使用 useLanguage
 const MainTabs = () => {
   const { currentLanguage } = useLanguage();
 
@@ -197,7 +131,7 @@ const MainTabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Projects"
+      initialRouteName="HomeTab"
       tabBarPosition="bottom"
       tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
@@ -205,6 +139,8 @@ const MainTabs = () => {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           height: 65,
+          paddingBottom: 10,
+          paddingTop: 5,
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           shadowColor: '#000',
@@ -218,8 +154,6 @@ const MainTabs = () => {
           fontSize: 12,
           marginBottom: 3,
         },
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
         tabBarIndicatorStyle: {
           opacity: 0,
         },
@@ -230,8 +164,14 @@ const MainTabs = () => {
         component={HomeScreen}
         options={{
           title: getLocalizedText('主页', 'Home'),
-          tabBarIcon: ({ color, focused }) => (
-            <HomeTabIcon color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.iconContainer}>
+              <Image
+                source={require('./Images/home.png')}
+                style={[styles.icon, { tintColor: focused ? '#FFFFFF' : '#B0B0B0' }]}
+              />
+              {focused && <View style={styles.indicator} />}
+            </View>
           ),
         }}
       />
@@ -240,8 +180,14 @@ const MainTabs = () => {
         component={HomeStack}
         options={{
           title: getLocalizedText('剪辑', 'Edit'),
-          tabBarIcon: ({ color, focused }) => (
-            <ProjectsTabIcon color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.iconContainer}>
+              <Image
+                source={require('./Images/edit.png')}
+                style={[styles.icon, { tintColor: focused ? '#FFFFFF' : '#B0B0B0' }]}
+              />
+              {focused && <View style={styles.indicator} />}
+            </View>
           ),
         }}
       />
@@ -250,8 +196,14 @@ const MainTabs = () => {
         component={SettingsScreen}
         options={{
           title: getLocalizedText('设置', 'Settings'),
-          tabBarIcon: ({ color, focused }) => (
-            <SettingsTabIcon color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.iconContainer}>
+              <Image
+                source={require('./Images/setting.png')}
+                style={[styles.icon, { tintColor: focused ? '#FFFFFF' : '#B0B0B0' }]}
+              />
+              {focused && <View style={styles.indicator} />}
+            </View>
           ),
         }}
       />
@@ -406,6 +358,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 5,
+  },
+  iconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    width: '100%',
+    height: '100%',
+  },
+  indicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#007AFF',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
   },
 });
 

@@ -111,21 +111,123 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onSendCommand, disabled = false
         try {
             const result = await audioRecorderPlayer.stopRecorder();
             setIsRecording(false);
-            
+
             if (audioPath) {
-                const newMessage: Message = {
-                    id: Date.now().toString(),
-                    text: '[语音消息]',
-                    isUser: true,
-                    type: 'audio',
-                    audioPath: audioPath,
-                };
-                setMessages(prev => [...prev, newMessage]);
+                // 确保文件存在
+                const fileExists = await RNFS.exists(audioPath);
+                if (!fileExists) {
+                    throw new Error('录音文件不存在');
+                }
+
+                // 获取文件信息
+                const fileInfo = await RNFS.stat(audioPath);
+                const logMessage = `录音文件信息:\n路径: ${audioPath}\n大小: ${fileInfo.size} 字节`;
+                console.log(logMessage);
+                Alert.alert('日志', logMessage);
+
+                // 创建FormData对象
+                const formData = new FormData();
+
+                // 根据平台处理文件路径
+                let fileUri = audioPath;
+                if (Platform.OS === 'android') {
+                    fileUri = `file://${audioPath}`;
+                }
+
+                formData.append('audio', {
+                    uri: fileUri,
+                    type: 'audio/mp3',
+                    name: 'audio.mp3',
+                    size: fileInfo.size
+                });
+
+                const sendLogMessage = `准备发送文件:\n${fileUri}`;
+                console.log(sendLogMessage);
+                Alert.alert('日志', sendLogMessage);
+
+                // 发送录音文件到服务器
+                try {
+                    const response = await fetch('http://139.224.33.240:8000/process_audio', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+
+                    const statusLogMessage = `服务器响应状态: ${response.status}`;
+                    console.log(statusLogMessage);
+                    Alert.alert('日志', statusLogMessage);
+
+                    if (!response.ok) {
+                        let errorMessage = '服务器响应错误';
+                        switch (response.status) {
+                            case 400:
+                                errorMessage = '录音文件格式不正确或文件损坏';
+                                break;
+                            case 413:
+                                errorMessage = '录音文件太大，请缩短录音时间';
+                                break;
+                            case 500:
+                                errorMessage = '服务器处理录音文件失败';
+                                break;
+                            case 503:
+                                errorMessage = '服务器暂时无法处理请求，请稍后重试';
+                                break;
+                            default:
+                                errorMessage = `服务器返回错误状态码: ${response.status}`;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const data = await response.json();
+                    const dataLogMessage = `服务器响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    console.log(dataLogMessage);
+                    Alert.alert('日志', dataLogMessage);
+
+                    if (data.success) {
+                        // 添加用户消息
+                        const userMessage: Message = {
+                            id: Date.now().toString(),
+                            text: '[语音消息]',
+                            isUser: true,
+                            type: 'audio',
+                            audioPath: audioPath,
+                        };
+                        setMessages(prev => [...prev, userMessage]);
+
+                        // 添加系统回复消息
+                        const systemMessage: Message = {
+                            id: (Date.now() + 1).toString(),
+                            text: data.transcription,
+                            isUser: false,
+                            type: 'text',
+                        };
+                        setMessages(prev => [...prev, systemMessage]);
+                    } else {
+                        throw new Error(data.error || '语音识别失败');
+                    }
+                } catch (error: any) {
+                    let errorMessage = '发送录音文件失败';
+
+                    if (error.message) {
+                        errorMessage = error.message;
+                    } else if (error.name === 'TypeError' && error.message.includes('Network request failed')) {
+                        errorMessage = '无法连接到服务器，请检查网络连接';
+                    } else if (error.name === 'AbortError') {
+                        errorMessage = '请求超时，请重试';
+                    }
+
+                    console.error('发送录音文件失败:', error);
+                    Alert.alert('错误', errorMessage);
+                }
+
                 setAudioPath(null);
             }
-        } catch (error) {
-            console.error('停止录音失败:', error);
-            Alert.alert('错误', '停止录音失败');
+        } catch (error: any) {
+            const errorLogMessage = `停止录音失败:\n${error.message}`;
+            console.error(errorLogMessage);
+            Alert.alert('错误', errorLogMessage);
         }
     };
 
@@ -157,7 +259,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ onSendCommand, disabled = false
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 100}
                 style={styles.inputContainer}
             >
                 <ImageBackground
@@ -250,12 +352,14 @@ const styles = StyleSheet.create({
     inputContainer: {
         paddingHorizontal: 10,
         paddingVertical: 5,
+        marginBottom: 20
     },
     inputBackground: {
         width: '100%',
         height: 60,
         minHeight: 60,
         justifyContent: 'center',
+        marginBottom: 25
     },
     inputWrapper: {
         flexDirection: 'row',

@@ -30,7 +30,7 @@ def extract_frame(video_path, frame_number):
 def video_comprehension(video_path, prompt, stream_type, example_video_path="D:/test1/video016.mp4"):
     client = OpenAI(
         # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key="sk-xxx"
-        api_key="your_qwen_vl_api",
+        api_key="sk-20b4e293dc524e6ca819d9b37e2cadd2",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
 
@@ -216,6 +216,7 @@ def process_video_with_sam2(video_path, prompt, output_video_path=None):
                 labels = np.array([1], dtype=np.int32)
                 print(f"使用中心点进行分割: ({detection_result['x']}, {detection_result['y']})")
                 success = model.segment_with_points(points, labels, frame_number)
+                
             else:
                 # 如果没有中心点坐标，则使用边界框
                 box = np.array([
@@ -226,6 +227,7 @@ def process_video_with_sam2(video_path, prompt, output_video_path=None):
                 ])
                 print(f"使用边界框进行分割: [{detection_result['x1']}, {detection_result['y1']}, {detection_result['x2']}, {detection_result['y2']}]")
                 success = model.segment_with_box(box, frame_number)
+              
         else:
             # 如果检测结果不是JSON格式，尝试提取中心点
             try:
@@ -235,6 +237,7 @@ def process_video_with_sam2(video_path, prompt, output_video_path=None):
                 labels = np.array([1], dtype=np.int32)
                 print(f"使用中心点进行分割: ({center_x}, {center_y})")
                 success = model.segment_with_points(points, labels, frame_number)
+          
             except:
                 print("无法提取中心点坐标，请检查检测结果格式")
                 return

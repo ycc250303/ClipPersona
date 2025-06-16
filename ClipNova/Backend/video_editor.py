@@ -106,8 +106,6 @@ class MoviePyVideoEditor(AbstractVideoEditor):
             raise ValueError("起始时间超出视频时长")
         if end is not None and end <= start:
             raise ValueError("结束时间必须大于起始时间")
-        # 只裁剪时间，不做任何分辨率修改
-        original_size = (self.video_clip.w, self.video_clip.h)
         self.video_clip = self.video_clip.subclip(start, end)
         logger.info(f"已裁剪视频: start={start}, end={end}")
 
@@ -183,31 +181,41 @@ class MoviePyVideoEditor(AbstractVideoEditor):
         self.video_clip = self.video_clip.fx(vfx.colorx, factor)
         logger.info(f"已调整亮度为 {factor} 倍")
 
+    def remove_objects(self, objects: str):
+        """
+        使用SAM2模型移除视频中的目标对象。
+        
+        Args:
+            objects: 要移除的目标对象描述
+        """
+        try:
+            from video_comprehension import process_video_with_sam2
+            
+            # 创建临时输出路径
+            temp_output = f"temp_output_{uuid.uuid4()}.mp4"
+            
+            # 处理视频目标消除
+            process_video_with_sam2(self.video_clip.filename, objects, temp_output)
+            
+            # 如果处理成功，更新视频剪辑
+            if os.path.exists(temp_output):
+                # 关闭当前视频剪辑
+                self.close()
+                # 加载处理后的视频
+                self.video_clip = VideoFileClip(temp_output)
+                # 删除临时文件
+                self._remove_temp_file(temp_output)
+                logger.info(f"已移除目标对象: {objects}")
+            else:
+                raise Exception("目标消除处理失败")
+                
+        except Exception as e:
+            logger.error(f"移除目标对象时出错: {e}")
+            raise
+
     def save(self):
         """保存编辑后的视频。"""
-        if not hasattr(self, 'output_path') or not self.output_path:
-            raise ValueError("未设置输出路径")
-            
-        # 获取原始视频的尺寸
-        original_width = self.video_clip.w
-        original_height = self.video_clip.h
-        
-        # 确保输出路径存在
-        output_dir = os.path.dirname(self.output_path)
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-            
-        # 使用原始分辨率保存，并设置关键参数
-        self.video_clip.write_videofile(
-            self.output_path,
-            codec='libx264',
-            audio_codec='aac',
-            preset='medium',
-            ffmpeg_params=[
-                "-pix_fmt", "yuv420p",
-                "-vf", f"scale={original_width}:{original_height}:force_original_aspect_ratio=1"
-            ]
-        )
+        self.video_clip.write_videofile(self.output_path, codec='libx264', audio_codec='aac')
         logger.info(f"视频已保存至: {self.output_path}")
 
     def close(self):

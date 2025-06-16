@@ -1,5 +1,6 @@
 import os
 import cv2
+from sympy import true
 import torch
 import subprocess
 import numpy as np
@@ -198,6 +199,18 @@ class SAM2InstanceSegmentationModel:
                     print(f"已删除文件夹: {folder}")
                 except OSError as e:
                     print(f"删除文件夹 {folder} 失败: {e}")
+
+        # 删除临时视频文件
+        temp_files = ["Backend/temp1.mp4", "Backend/temp2.mp4"]
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    print(f"已删除临时文件: {temp_file}")
+                except OSError as e:
+                    print(f"删除临时文件 {temp_file} 失败: {e}")
+        
+        
 
 
     def _get_unique_output_path(self, output_path: str) -> str:
@@ -428,6 +441,8 @@ class SAM2InstanceSegmentationModel:
         # 清理临时目录
         shutil.rmtree(temp1_frames_dir)
         shutil.rmtree(temp2_frames_dir)
+
+        return True
 
     def segment_with_box(self, box: np.ndarray, frame_idx: int = 0) -> None:
         """

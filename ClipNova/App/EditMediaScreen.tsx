@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,10 +24,13 @@ import ChatScreen from './components/ChatScreen';
 import RNFS from 'react-native-fs';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { checkStoragePermissions, requestStoragePermissions } from './utils/permissionManager';
+import { saveDraftVideo, DraftVideo } from './utils/draftVideoManager';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLanguage } from './context/LanguageContext';
 
 // API配置
 const API_CONFIG = {
-  BASE_URL: 'http://139.224.33.240:8000',
+  BASE_URL: 'http://100.77.182.178:8000',
   ENDPOINTS: {
     PROCESS_VIDEO: '/process-video',
     CHECK_FILE: '/check-file'
@@ -103,6 +106,42 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
   const [previewVideoPath, setPreviewVideoPath] = useState<string | null>(null);
   const [localSavedPath, setLocalSavedPath] = useState<string | null>(null);
   const [hasStoragePermission, setHasStoragePermission] = useState(false);
+  const { currentLanguage } = useLanguage();
+
+  // 辅助函数：根据当前语言获取文本
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  // 新增：自动保存草稿的函数
+  const autoSaveDraft = useCallback(async () => {
+    if (currentProcessedVideo) {
+      console.log(getLocalizedText('检测到未保存的草稿视频，尝试自动保存...', 'Unsaved draft video detected, attempting auto-save...'));
+      const draftName = getLocalizedText(`草稿_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}`, `Draft_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}`);
+      const savedDraft = await saveDraftVideo({
+        name: draftName,
+        path: currentProcessedVideo,
+      });
+
+      if (savedDraft) {
+        console.log('临时草稿视频自动保存成功:', savedDraft.path);
+        // 自动保存后，清理 currentProcessedVideo，避免重复保存或影响下次编辑
+        setCurrentProcessedVideo(null);
+      } else {
+        console.error('临时草稿视频自动保存失败。');
+      }
+    }
+  }, [currentProcessedVideo]);
+
+  // 使用 useFocusEffect 在屏幕失去焦点时触发自动保存
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // 当屏幕失去焦点或组件卸载时，执行自动保存
+        autoSaveDraft();
+      };
+    }, [autoSaveDraft]) // 依赖 autoSaveDraft 确保在它改变时 effect 会重新注册
+  );
 
   useEffect(() => {
     if (isVideo && initialMediaUri) {
@@ -189,7 +228,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
   const checkAndUploadVideo = async (uri: string): Promise<boolean> => {
     if (!uri) {
       console.error('视频URI为空');
-      Alert.alert('错误', '无效的视频路径');
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText('无效的视频路径', 'Invalid video path'));
       return false;
     }
 
@@ -284,7 +323,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       }
     } catch (error: any) {
       console.error('上传视频失败:', error);
-      Alert.alert('错误', `上传视频失败: ${error.message}`);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`上传视频失败: ${error.message}`, `Video upload failed: ${error.message}`));
       return false;
     } finally {
       setIsUploading(false);
@@ -312,7 +351,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       // 添加选择确认消息
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
-        text: '已选择此版本视频进行后续编辑',
+        text: getLocalizedText('已选择此版本视频进行后续编辑', 'This version of the video has been selected for further editing'),
         isUser: false,
         type: 'text'
       }]);
@@ -322,13 +361,13 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       const uploadSuccess = await checkAndUploadVideo(videoPath);
       if (!uploadSuccess) {
         console.error('预上传视频失败');
-        Alert.alert('警告', '视频预上传失败，可能影响后续编辑操作');
+        Alert.alert(getLocalizedText('警告', 'Warning'), getLocalizedText('视频预上传失败，可能影响后续编辑操作', 'Video pre-upload failed, which may affect subsequent editing operations'));
       } else {
         console.log('预上传视频成功');
       }
     } catch (error: any) {
       console.error('选择视频时出错:', error);
-      Alert.alert('错误', `选择视频失败: ${error.message}`);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`选择视频失败: ${error.message}`, `Failed to select video: ${error.message}`));
     }
   };
 
@@ -342,15 +381,15 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
         const writePermission = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           {
-            title: "存储权限",
-            message: "需要存储权限才能下载视频",
-            buttonNeutral: "稍后询问",
-            buttonNegative: "取消",
-            buttonPositive: "确定"
+            title: getLocalizedText('存储权限', 'Storage Permission'),
+            message: getLocalizedText('需要存储权限才能下载视频', 'Storage permission is required to download videos.'),
+            buttonNeutral: getLocalizedText('稍后询问', 'Ask Later'),
+            buttonNegative: getLocalizedText('取消', 'Cancel'),
+            buttonPositive: getLocalizedText('确定', 'OK')
           }
         );
         if (writePermission !== PermissionsAndroid.RESULTS.GRANTED) {
-          throw new Error('需要存储权限才能下载视频');
+          throw new Error(getLocalizedText('需要存储权限才能下载视频', 'Storage permission required to download video'));
         }
       }
 
@@ -390,8 +429,8 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       return localPath;
     } catch (error: any) {
       console.error('下载视频失败:', error);
-      Alert.alert('错误', `下载视频失败: ${error.message}`);
-      throw new Error(`下载视频失败: ${error.message}`);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`下载视频失败: ${error.message}`, `Video download failed: ${error.message}`));
+      throw new Error(getLocalizedText(`下载视频失败: ${error.message}`, `Video download failed: ${error.message}`));
     }
   };
 
@@ -424,7 +463,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleExportVideo = async () => {
     if (!videoPath) {
-      Alert.alert('错误', '没有可导出的视频');
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText('没有可导出的视频', 'No video to export'));
       return;
     }
 
@@ -434,7 +473,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       // 检查权限
       const hasPermission = await requestStoragePermissions();
       if (!hasPermission) {
-        throw new Error('需要存储权限才能导出视频');
+        throw new Error(getLocalizedText('需要存储权限才能导出视频', 'Storage permission required to export video'));
       }
 
       // 确保文件路径格式正确
@@ -455,10 +494,10 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
         album: 'ClipPersona'
       });
 
-      Alert.alert('成功', '视频已成功导出到相册');
+      Alert.alert(getLocalizedText('成功', 'Success'), getLocalizedText('视频已成功导出到相册', 'Video successfully exported to album'));
     } catch (error: any) {
       console.error('导出视频失败:', error);
-      Alert.alert('错误', `导出视频失败: ${error.message}`);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`导出视频失败: ${error.message}`, `Video export failed: ${error.message}`));
     }
   };
 
@@ -474,7 +513,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
     // 添加消息
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
-      text: '视频处理完成，点击"选择"可以使用此版本继续编辑',
+      text: getLocalizedText('视频处理完成，点击"选择"可以使用此版本继续编辑', 'Video processing complete, click "Select" to continue editing with this version'),
       isUser: false,
       type: 'preview',
       videoPath: localPath,
@@ -484,12 +523,12 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleNaturalLanguageCommand = async (command: string) => {
     if (!currentMediaUri) {
-      Alert.alert('错误', '没有选择视频');
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText('没有选择视频', 'No video selected'));
       return;
     }
 
     if (isProcessing) {
-      Alert.alert('提示', '视频正在处理中，请稍候...');
+      Alert.alert(getLocalizedText('提示', 'Tip'), getLocalizedText('视频正在处理中，请稍候...', 'Video is processing, please wait...'));
       return;
     }
 
@@ -521,7 +560,13 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       });
 
       if (!nlpResponse.ok) {
-        throw new Error('处理指令失败');
+        const errorBody = await nlpResponse.text();
+        console.error(
+          `处理指令失败: 状态码 ${nlpResponse.status}, 状态文本: ${nlpResponse.statusText}, 响应体: ${errorBody}`
+        );
+        throw new Error(
+          `处理指令失败: ${nlpResponse.status} ${nlpResponse.statusText} - ${errorBody.substring(0, 100)}...`
+        );
       }
 
       const data = await nlpResponse.json();
@@ -546,14 +591,14 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
           await handleProcessedVideo(localPath);
         } catch (error: any) {
           console.error('处理视频结果时出错:', error);
-          Alert.alert('错误', `处理视频失败: ${error.message}`);
+          Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`处理视频失败: ${error.message}`, `Video processing failed: ${error.message}`));
         }
       } else {
-        Alert.alert('错误', data.message || '处理视频失败');
+        Alert.alert(getLocalizedText('错误', 'Error'), data.message || getLocalizedText('处理视频失败', 'Video processing failed'));
       }
     } catch (error: any) {
-      console.error('处理视频时出错:', error);
-      Alert.alert('错误', `处理视频失败: ${error.message}`);
+      console.error('处理视频时出错:', error.message, error.stack);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`处理视频失败: ${error.message}`, `Video processing failed: ${error.message}`));
     } finally {
       setIsProcessing(false);
     }
@@ -562,7 +607,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
   // 修改视频错误处理函数
   const handleVideoError = (e: Readonly<VideoError>) => {
     console.error('视频播放错误:', e.error);
-    Alert.alert('错误', '视频播放失败，请重试');
+    Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText('视频播放失败，请重试', 'Video playback failed, please try try again'));
   };
 
   // 修改保存和放弃的处理函数
@@ -570,7 +615,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
     console.log('保存按钮被点击');
     if (!currentProcessedVideo) {
       console.error('没有处理后的视频可保存');
-      Alert.alert('错误', '没有可保存的视频');
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText('没有可保存的视频', 'No video to save'));
       return;
     }
 
@@ -580,7 +625,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       // 检查权限
       const hasPermission = await requestStoragePermissions();
       if (!hasPermission) {
-        throw new Error('需要存储权限才能保存视频');
+        throw new Error(getLocalizedText('需要存储权限才能保存视频', 'Storage permission required to save video'));
       }
 
       // 确保文件路径格式正确
@@ -605,27 +650,46 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
 
       console.log('视频成功保存到相册');
 
-      // 添加成功消息
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: '视频已成功保存到相册',
-        isUser: false,
-        type: 'text'
-      }]);
+      // 新增：保存到草稿
+      const draftName = getLocalizedText(`剪辑草稿_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}`, `EditedDraft_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}`);
+      const savedDraft = await saveDraftVideo({
+        name: draftName,
+        path: filePath, // saveDraftVideo 会处理文件复制和前缀
+      });
 
-      Alert.alert('成功', '视频已保存到相册');
+      if (savedDraft) {
+        console.log('视频成功保存到草稿:', savedDraft.path);
+        // 添加成功消息
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: getLocalizedText(`视频已成功保存到相册和草稿 (${savedDraft.name})`, `Video successfully saved to album and drafts (${savedDraft.name})`),
+          isUser: false,
+          type: 'text'
+        }]);
+      } else {
+        console.error('视频保存到草稿失败。');
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: getLocalizedText('视频已成功保存到相册，但保存到草稿失败。', 'Video successfully saved to album, but failed to save to drafts.'),
+          isUser: false,
+          type: 'text'
+        }]);
+      }
+
+      Alert.alert(getLocalizedText('成功', 'Success'), getLocalizedText('视频已保存到相册', 'Video saved to album'));
 
       // 清理临时文件
       try {
+        // 在保存到相册并存储为草稿后，删除临时文件
         await RNFS.unlink(filePath.replace('file://', ''));
         console.log('临时文件删除成功');
-        setCurrentProcessedVideo(null);
+        setCurrentProcessedVideo(null); // 清除当前处理中的视频状态
       } catch (error) {
         console.error('删除临时文件失败:', error);
       }
     } catch (error: any) {
       console.error('保存视频失败:', error);
-      Alert.alert('错误', `保存视频失败: ${error.message}`);
+      Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`保存视频失败: ${error.message}`, `Video save failed: ${error.message}`));
     }
   };
 
@@ -643,7 +707,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
 
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
-      text: '已放弃修改',
+      text: getLocalizedText('已放弃修改', 'Changes discarded'),
       isUser: false,
       type: 'text'
     }]);
@@ -655,7 +719,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       style={styles.exportButton}
       onPress={handleExportVideo}
     >
-      <Text style={styles.exportButtonText}>导出</Text>
+      <Text style={styles.exportButtonText}>{getLocalizedText('导出', 'Export')}</Text>
     </TouchableOpacity>
   );
 
@@ -665,9 +729,8 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       style={styles.container}
       resizeMode="cover"
     >
-      <KeyboardAvoidingView
+      <View
         style={styles.innerContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.videoContainer}>
           <ExportButton />
@@ -701,7 +764,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
             )}
             {isProcessing && (
               <View style={styles.processingOverlay}>
-                <Text style={styles.processingText}>处理中...</Text>
+                <Text style={styles.processingText}>{getLocalizedText('处理中...', 'Processing...')}</Text>
               </View>
             )}
 
@@ -716,7 +779,7 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
             setMessages={setMessages}
           />
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </ImageBackground>
   );
 };
@@ -736,7 +799,7 @@ const styles = StyleSheet.create({
     height: width * 0.6,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
   },
   videoFrame: {
     marginTop: 160,
@@ -750,7 +813,7 @@ const styles = StyleSheet.create({
     height: '85%',
   },
   chatContainer: {
-    marginTop: 50,
+    marginTop: 100,
     flex: 1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

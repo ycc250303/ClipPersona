@@ -6,6 +6,8 @@ import logging
 import netifaces  # 用于获取网络接口信息
 from nlp_parser import process_instruction, DialogueManager
 from video_editor import MoviePyVideoEditor
+from video_comprehension import video_comprehension, process_video_with_sam2
+from sam2_model import SAM2InstanceSegmentationModel
 import mimetypes
 import re
 
@@ -246,36 +248,81 @@ def process_video():
         # 处理视频
         dialogue_manager.set_current_video(video_path)
         action, confirmation, _ = process_instruction(instruction)
-        
+
+        # 清理action中的前缀
         if action:
-            editor = MoviePyVideoEditor(video_path)
-            result = editor.execute_action(action)
+            import re
+            clean_action = re.sub(r'^assistant:\s*', '', action)
+            logger.info(f"清理后的action: {clean_action}")
             
-            # 为处理后的视频创建新的简化文件名
-            output_simplified_name = f"output_{simplified_name}"
-            output_path = os.path.join(upload_folder, output_simplified_name)
-            
-            # 保存处理后的视频
-            editor.output_path = output_path
-            editor.save()
-            editor.close()
+            # 检查是否是目标消除操作
+            if clean_action.startswith('action: remove_objects'):
+                logger.info("检测到目标消除操作")
+                # 使用目标消除处理
+                logger.info("使用目标消除处理")
+                output_simplified_name = f"removed_{simplified_name}"
+                output_path = os.path.join(upload_folder, output_simplified_name)
+                
+                # 从action中提取目标描述
+                match = re.search(r'objects=([^ ]+)', clean_action)
+                if match:
+                    target_description = match.group(1)
+                    logger.info(f"提取的目标描述: {target_description}")
+                    process_video_with_sam2(video_path, target_description, output_path)
+                    
+                    # 确保输出文件存在
+                    if not os.path.exists(output_path):
+                        raise Exception("处理后的视频文件未生成")
+                        
+                    # 构建相对路径的URL
+                    video_url = f"/uploads/{output_simplified_name}"
+                    
+                    logger.info(f"目标消除完成，输出URL: {video_url}")
+                    
+                    return jsonify({
+                        "status": "success",
+                        "message": confirmation,
+                        "output_path": video_url,
+                        "simplified_name": output_simplified_name
+                    })
+                else:
+                    logger.error(f"无法从action中提取目标描述: {clean_action}")
+                    return jsonify({
+                        "status": "error",
+                        "message": "无法解析目标描述"
+                    }), 400
+            else:
+                logger.info(f"检测到常规编辑操作: {clean_action}")
+                # 使用常规视频编辑处理
+                logger.info("使用常规视频编辑处理")
+                editor = MoviePyVideoEditor(video_path)
+                result = editor.execute_action(clean_action)
+                
+                # 为处理后的视频创建新的简化文件名
+                output_simplified_name = f"output_{simplified_name}"
+                output_path = os.path.join(upload_folder, output_simplified_name)
+                
+                # 保存处理后的视频
+                editor.output_path = output_path
+                editor.save()
+                editor.close()
 
-            # 确保输出文件存在
-            if not os.path.exists(output_path):
-                raise Exception("处理后的视频文件未生成")
+                # 确保输出文件存在
+                if not os.path.exists(output_path):
+                    raise Exception("处理后的视频文件未生成")
 
-            # 构建相对路径的URL
-            video_url = f"/uploads/{output_simplified_name}"
-            
-            logger.info(f"视频处理完成，输出URL: {video_url}")
-            
-            return jsonify({
-                "status": "success",
-                "message": confirmation,
-                "result": result,
-                "output_path": video_url,
-                "simplified_name": output_simplified_name
-            })
+                # 构建相对路径的URL
+                video_url = f"/uploads/{output_simplified_name}"
+                
+                logger.info(f"视频处理完成，输出URL: {video_url}")
+                
+                return jsonify({
+                    "status": "success",
+                    "message": confirmation,
+                    "result": result,
+                    "output_path": video_url,
+                    "simplified_name": output_simplified_name
+                })
         else:
             return jsonify({
                 "status": "error",
@@ -312,6 +359,71 @@ def check_file():
             })
             
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 添加新的视频目标消除端点
+@app.route('/remove-target', methods=['POST', 'OPTIONS'])
+def remove_target():
+    if request.method == 'OPTIONS':
+        return make_response('', 200)
+    
+    try:
+        logger.info(f"收到目标消除请求，来自: {request.remote_addr}")
+        
+        # 检查文件和指令
+        if 'video' not in request.files:
+            return jsonify({"error": "请上传视频文件"}), 400
+        if 'instruction' not in request.form:
+            return jsonify({"error": "请提供目标描述"}), 400
+            
+        video_file = request.files['video']
+        instruction = request.form['instruction']
+        
+        if video_file.filename == '':
+            return jsonify({"error": "未选择文件"}), 400
+            
+        # 获取或创建简化文件名
+        original_filename = video_file.filename
+        simplified_name = file_manager.get_simplified_name(original_filename)
+        
+        # 保存视频文件
+        upload_folder = 'uploads'
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+            
+        video_path = os.path.join(upload_folder, simplified_name)
+        
+        # 如果文件不存在才保存
+        if not os.path.exists(video_path):
+            video_file.save(video_path)
+            logger.info(f"视频保存成功: {video_path} (原始文件名: {original_filename})")
+        
+        # 为处理后的视频创建新的简化文件名
+        output_simplified_name = f"removed_{simplified_name}"
+        output_path = os.path.join(upload_folder, output_simplified_name)
+        
+        # 处理视频目标消除
+        process_video_with_sam2(video_path, instruction, output_path)
+        
+        # 确保输出文件存在
+        if not os.path.exists(output_path):
+            raise Exception("处理后的视频文件未生成")
+            
+        # 构建相对路径的URL
+        video_url = f"/uploads/{output_simplified_name}"
+        
+        logger.info(f"目标消除完成，输出URL: {video_url}")
+        
+        return jsonify({
+            "status": "success",
+            "message": "目标消除成功",
+            "output_path": video_url,
+            "simplified_name": output_simplified_name
+        })
+            
+    except Exception as e:
+        logger.error(f"处理请求时出错: {str(e)}")
+        logger.exception("详细错误信息：")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

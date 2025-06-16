@@ -29,6 +29,13 @@ OPERATIONS: Dict[str, Dict[str, Any]] = {
         'description': '裁剪视频，start=秒数，end=秒数（可选，默认为视频末尾）。例：剪掉前 1 秒 → action: trim start=1.0',
         'supported_editors': ['moviepy', 'ffmpeg', 'opencv']  # 支持该操作的编辑器类型
     },
+    'remove_objects': {
+        'params': {
+            'objects': {'type': str, 'default': '', 'required': True}
+        },
+        'description': '移除视频中的目标对象，objects=目标描述。例：移除穿红色衣服的人 → action: remove_objects objects=穿红色衣服的人',
+        'supported_editors': ['moviepy']
+    },
     'add_transition': {
         'params': {
             'type': {'type': str, 'default': 'fade', 'required': True},
@@ -101,8 +108,8 @@ def init_config() -> Callable:
     Returns:
         Callable: 处理用户单次提问的函数。
     """
-    APP_ID = 'YOUR_BLUE_LLM_APP_ID'
-    APP_KEY = 'YOUR_BLUE_LLM_API_KEY'
+    APP_ID = '2025441492'
+    APP_KEY = 'wXhkzebAEfVscVkg'
     URI = '/vivogpt/completions'
     DOMAIN = 'api-ai.vivo.com.cn'
     METHOD = 'POST'
@@ -110,8 +117,22 @@ def init_config() -> Callable:
         "你是视频剪辑助手，解析用户自然语言指令，返回格式为：action: <操作> [参数] editor=<编辑器类型>。"
         "根据用户意图推断操作和参数，'剪掉前 X 秒'或'移除前 X 秒'表示从 X 秒开始到视频末尾，仅设置 start=X。"
         "参数值应为数字时，确保格式为小数形式（如 1.0 而非 1）。"
+        
+        "重要规则："
+        "1. 当用户要求移除视频中的特定物体或人物时，必须使用 remove_objects 操作，而不是 remove_segment。"
+        "2. 不要使用 remove_segment 操作，它已被弃用。"
+        "3. 对于任何涉及移除视频中物体或人物的请求，都应该使用 remove_objects。"
+        "4. 返回的action必须完全匹配以下格式：action: remove_objects objects=<目标描述> editor=moviepy"
+        "5. 不要添加任何额外的空格或换行符。"
       
         "例如："
+        "- '去掉视频中的人' → action: remove_objects objects=人 editor=moviepy"
+        "- '移除穿红色衣服的人' → action: remove_objects objects=穿红色衣服的人 editor=moviepy"
+        "- '去掉在椅子上摇晃的人' → action: remove_objects objects=在椅子上摇晃的人 editor=moviepy"
+        "- '删除画面中的汽车' → action: remove_objects objects=汽车 editor=moviepy"
+        "- '移除背景中的树木' → action: remove_objects objects=树木 editor=moviepy"
+        
+        "其他操作示例："
         "- '剪掉前 1 秒' → action: trim start=1.0 editor=moviepy"
         "- '添加 2 秒淡入淡出' → action: add_transition type=fade duration=2.0 editor=moviepy"
         "- '加速到 1.5 倍' → action: speed factor=1.5 editor=moviepy"
@@ -173,6 +194,7 @@ def init_config() -> Callable:
             confirmation = "哎呀，处理指令时出错了，检查一下输入或稍后再试吧！"
         end_time = time.time()
         logger.info(f'请求耗时: {end_time - start_time:.2f}秒')
+  
         return content, confirmation, history
 
     return ask_vivogpt
@@ -343,9 +365,9 @@ class DialogueManager:
         self.context["total_operations"] = 0
 
 if __name__ == "__main__":
-    inputs = ["剪掉视频第一秒"]
+    inputs = ["将视频的前 1 秒剪掉"]
     for user_input in inputs:
         logger.info(f"处理用户输入: {user_input}")
         content, confirmation, history = process_instruction(user_input)
         print(f"指令: {content}")
-        print(f"确认: {confirmation}")  
+        print(f"确认: {confirmation}")

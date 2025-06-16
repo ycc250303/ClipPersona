@@ -16,6 +16,7 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import Video from 'react-native-video';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { useNavigation, NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useLanguage } from './context/LanguageContext';
 
 // API配置
 const API_CONFIG = {
@@ -40,6 +41,11 @@ const MediaPickerScreen: React.FC = () => {
   const [mediaDimensions, setMediaDimensions] = useState<{ width: number; height: number } | null>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const screenWidth = Dimensions.get('window').width;
+  const { currentLanguage } = useLanguage();
+
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
 
   const pickVideo = async () => {
     launchImageLibrary(
@@ -51,7 +57,7 @@ const MediaPickerScreen: React.FC = () => {
         if (response.didCancel) {
           return;
         } else if (response.errorCode) {
-          Alert.alert('错误', `选择视频失败: ${response.errorMessage}`);
+          Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`选择视频失败: ${response.errorMessage}`, `Failed to select video: ${response.errorMessage}`));
         } else if (response.assets && response.assets[0].uri) {
           setMediaUri(response.assets[0].uri);
           setIsVideo(true);
@@ -78,7 +84,7 @@ const MediaPickerScreen: React.FC = () => {
         if (response.didCancel) {
           return;
         } else if (response.errorCode) {
-          Alert.alert('错误', `录制视频失败: ${response.errorMessage}`);
+          Alert.alert(getLocalizedText('错误', 'Error'), getLocalizedText(`录制视频失败: ${response.errorMessage}`, `Failed to record video: ${response.errorMessage}`));
         } else if (response.assets && response.assets[0].uri) {
           setMediaUri(response.assets[0].uri);
           setIsVideo(true);
@@ -97,7 +103,7 @@ const MediaPickerScreen: React.FC = () => {
 
   const handleEditPress = () => {
     if (!mediaUri) {
-      Alert.alert('提示', '请先选择视频');
+      Alert.alert(getLocalizedText('提示', 'Tip'), getLocalizedText('请先选择视频', 'Please select a video first'));
       return;
     }
 
@@ -157,7 +163,7 @@ const MediaPickerScreen: React.FC = () => {
               />
             )
           ) : (
-            <Text style={styles.placeholderText}>视频/图片将在此显示</Text>
+            <Text style={styles.placeholderText}>{getLocalizedText('视频/图片将在此显示', 'Video/Image will appear here')}</Text>
           )}
         </View>
 
@@ -167,7 +173,7 @@ const MediaPickerScreen: React.FC = () => {
               style={styles.customButton}
               onPress={pickVideo}
             >
-              <Text style={styles.buttonText}>选择视频</Text>
+              <Text style={styles.buttonText}>{getLocalizedText('选择视频', 'Select Video')}</Text>
               <Image
                 source={require('../Images/MediaPickerScreen/robot1.png')}
                 style={[styles.robotIcon, styles.robotIconLeft]}
@@ -178,7 +184,7 @@ const MediaPickerScreen: React.FC = () => {
               style={styles.customButton}
               onPress={captureVideo}
             >
-              <Text style={styles.buttonText}>录制视频</Text>
+              <Text style={styles.buttonText}>{getLocalizedText('录制视频', 'Record Video')}</Text>
               <Image
                 source={require('../Images/MediaPickerScreen/robot2.png')}
                 style={[styles.robotIcon, styles.robotIconRight]}
@@ -194,7 +200,7 @@ const MediaPickerScreen: React.FC = () => {
               ]}
               onPress={handleEditPress}
             >
-              <Text style={styles.actionButtonText}>编辑</Text>
+              <Text style={styles.actionButtonText}>{getLocalizedText('编辑', 'Edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -203,7 +209,7 @@ const MediaPickerScreen: React.FC = () => {
               ]}
               onPress={handleClearMedia}
             >
-              <Text style={styles.actionButtonText}>重选</Text>
+              <Text style={styles.actionButtonText}>{getLocalizedText('重选', 'Reselect')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -274,10 +280,10 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -20 }],
   },
   robotIconLeft: {
-    left: 10,
+    left: -12,
   },
   robotIconRight: {
-    right: 10,
+    right: -12,
   },
   actionButtonContainer: {
     flexDirection: 'row',
@@ -287,8 +293,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   circularActionButton: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 80,
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
