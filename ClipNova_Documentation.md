@@ -2,7 +2,7 @@
 
 > ClipNova: One-click video production and AI intelligent editing lead to a new experience of efficient video creation.
 >
-> <img src="assets/Logo.jpg" width="200">
+> <img src="assets/logo.jpg" width="200">
 
 ## 1 Project Overview
 
