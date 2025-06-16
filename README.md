@@ -8,10 +8,10 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
 
 | 姓名   | 学号    | 分工                         | 工作量 |
 | ------ | ------- | ---------------------------- | ------ |
-| 尹诚诚 | 2351279 | 框架搭建、技术开发、文档撰写 |        |
-| 吴瑞翔 | 2351716 | 技术开发                     |        |
-| 郑耀辉 | 2352037 | 文档撰写、PPT制作            |        |
-| 郑功灿 | 2356215 | 技术开发、文档撰写           |        |
+| 尹诚诚 | 2351279 | 框架搭建、技术开发、文档撰写 | 28%    |
+| 吴瑞翔 | 2351716 | 技术开发                     | 28%    |
+| 郑耀辉 | 2352037 | 文档撰写、PPT制作            | 22%    |
+| 郑功灿 | 2356215 | 技术开发、文档撰写           | 22%    |
 
 ## 3 项目组成
 
@@ -20,7 +20,6 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
   * `/App` 项目前端代码文件
   * `/Backend` 项目后端代码文件
   * `/Images` 项目资源文件
-  * `/Models` 项目所需的模型文件
   * `App.tsx` 引用程序入口组件
   * `package.json`: 项目依赖管理和脚本配置
   * `package-lock.json`: 锁定依赖包版本的文件
@@ -33,6 +32,8 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
   * `metro.config.js`: React Native打包工具Metro的配置
   * `babel.config.js`: JavaScript编译器Babel的配置
 * `ClipNova_Documentation.md` 项目文档
+
+注：项目源文件夹还有`/node_modules`和`/Android`以及目标消除所用的模型，但因占用空间过大，故未上传至git
 
 ## 4 项目配置
 
@@ -103,3 +104,18 @@ pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https
 pip install -U openmim
 mim install mmcv
 ```
+
+### 4.3 API替换与服务器配置
+
+1. 申请蓝心大模型和通义千问模型的API_KEY，将`ClipNova\Backend\nlp_parser.py`和`ClipNova\Backend\video_comprehension.py`中的api_key替换为自己的api_key
+2. 将`/Backend`文件夹上传至服务器，在服务器中执行步骤**4.2**
+3. 在服务器中执行以下命令
+   
+```bash
+conda activate hci
+# 切换到Backend目录
+cd <path_to_your_Backend>
+python api_server.py
+```
+
+4. 获取服务器ip，并将`ClipNova\App\EditMediaScreen.tsx`中的32行`API_CONFIG`内的ip替换为服务器ip（消除功能需要GPU配置）

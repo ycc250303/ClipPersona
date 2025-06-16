@@ -30,7 +30,7 @@ def extract_frame(video_path, frame_number):
 def video_comprehension(video_path, prompt, stream_type, example_video_path="D:/test1/video016.mp4"):
     client = OpenAI(
         # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key="sk-xxx"
-        api_key="sk-20b4e293dc524e6ca819d9b37e2cadd2",
+        api_key="your_qwen_api_key",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
 
