@@ -265,14 +265,15 @@ Voice input:
   * The video dims, and the text "Processing..." is displayed.
   * Prompt the user to wait patiently.
 
-<img src="assets/TODO.jpg" width="200">
+<img src="assets/speed.jpg" width="200">
 
 #### 5.4.3 Editing Result and Secondary Operation Interface
 **Content Preview Area**:
   * The player supports fast forward, pause, and frame capture.
   * You can choose to "Continue Editing" or "One-click Export".
 
-<img src="assets/TODO.jpg" width="200">
+<img src="assets/remove.jpg" width="200">
+<img src="assets/cut.jpg" width="200">
 
 #### 5.4.4 User Settings Interface Prototype Diagram
 **Information Management Interface**:

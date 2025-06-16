@@ -271,14 +271,15 @@ ClipNova的交互设计遵循以下理念：
   * 视频变暗，显示“处理中...”文案；
   * 提示用户耐心等待。
 
-<img src="assets/TODO.jpg" width="200">
+<img src="assets/speed.jpg" width="200">
 
 #### 5.4.3 剪辑结果与二次操作界面
 **内容预览区：**
   * 播放器支持快进、暂停、截帧；
   * 可选择“继续编辑”或“一键导出”。
 
-<img src="assets/TODO.jpg" width="200">
+<img src="assets/remove.jpg" width="200">
+<img src="assets/cut.jpg" width="200">
 
 #### 5.4.4 用户设置界面原型图
 **信息管理界面：**
