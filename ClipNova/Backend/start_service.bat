@@ -2,7 +2,7 @@
 echo Video process service is starting...
 
 :: 激活虚拟环境
-call activate videoedit
+call activate sam2
 
 :: 启动 FastAPI 服务器
 python api_server.py

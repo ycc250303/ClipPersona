@@ -104,16 +104,16 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
             if (options.tabBarLabel !== undefined) {
               return typeof options.tabBarLabel === 'string'
                 ? getLocalizedText(
-                    options.tabBarLabel === '主页' ? '主页' : options.tabBarLabel === '剪辑' ? '剪辑' : '设置',
-                    options.tabBarLabel === 'Home' ? 'Home' : options.tabBarLabel === 'Edit' ? 'Edit' : 'Settings'
-                  )
+                  options.tabBarLabel === '主页' ? '主页' : options.tabBarLabel === '剪辑' ? '剪辑' : '设置',
+                  options.tabBarLabel === 'Home' ? 'Home' : options.tabBarLabel === 'Edit' ? 'Edit' : 'Settings'
+                )
                 : options.tabBarLabel({ focused: isFocused, color: isFocused ? '#007AFF' : 'gray' });
             } else if (options.title !== undefined) {
               return typeof options.title === 'string'
                 ? getLocalizedText(
-                    options.title === '主页' ? '主页' : options.title === '剪辑' ? '剪辑' : '设置',
-                    options.title === 'Home' ? 'Home' : options.title === 'Edit' ? 'Edit' : 'Settings'
-                  )
+                  options.title === '主页' ? '主页' : options.title === '剪辑' ? '剪辑' : '设置',
+                  options.title === 'Home' ? 'Home' : options.title === 'Edit' ? 'Edit' : 'Settings'
+                )
                 : options.title;
             } else {
               return getLocalizedText(

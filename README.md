@@ -18,8 +18,9 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
 * `/assets`存放`readme.md`和`ClipNova_Documentation.md`文档所需的相关图片资源
 * `/ClipNova` 项目源代码
   * `/App` 项目前端代码文件
-  * `/Images` 项目资源文件
   * `Backend` 项目后端代码文件
+  * `/Images` 项目资源文件
+  * `/Models` 项目所需的模型文件
   * `App.tsx` 项目启动程序
 * `ClipNova_Documentation.md` 项目文档
 
