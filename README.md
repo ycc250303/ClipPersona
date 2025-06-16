@@ -10,8 +10,8 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
 | ------ | ------- | ---------------------------- | ------ |
 | 尹诚诚 | 2351279 | 框架搭建、技术开发、文档撰写 |        |
 | 吴瑞翔 | 2351716 | 技术开发                     |        |
-| 郑耀辉 |         | 文档撰写           |        |
-| 郑功灿 |         | 技术开发、文档撰写                     |        |
+| 郑耀辉 | 2352037 | 文档撰写、PPT制作            |        |
+| 郑功灿 | 2356215 | 技术开发、文档撰写           |        |
 
 ## 3 项目组成
 
@@ -21,7 +21,17 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
   * `/Backend` 项目后端代码文件
   * `/Images` 项目资源文件
   * `/Models` 项目所需的模型文件
-  * `App.tsx` 项目启动程序
+  * `App.tsx` 引用程序入口组件
+  * `package.json`: 项目依赖管理和脚本配置
+  * `package-lock.json`: 锁定依赖包版本的文件
+  * `tsconfig.json`: TypeScript编译配置
+  * `app.json`: React Native应用的基本配置
+  * `.prettierrc.js`: 代码格式化工具Prettier的配置
+  * `.eslintrc.js`: JavaScript代码检查工具ESLint的配置
+  * `.watchmanconfig`: Watchman文件监控工具配置
+  * `jest.config.js`: 单元测试框架Jest的配置
+  * `metro.config.js`: React Native打包工具Metro的配置
+  * `babel.config.js`: JavaScript编译器Babel的配置
 * `ClipNova_Documentation.md` 项目文档
 
 ## 4 项目配置
@@ -93,4 +103,3 @@ pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https
 pip install -U openmim
 mim install mmcv
 ```
-
