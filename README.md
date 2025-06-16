@@ -31,7 +31,7 @@ ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
 1. 安装**Node.js**（ Node 的版本应大于等于 18）
 2. 安装**Java SE Development Kit (JDK)**
 3. 安装**Android Studio**，并搭建相关开发环境
-4. 创建**React Native**项目，注意项目路径不要有在我
+4. 创建**React Native**项目，注意项目路径**不要有中文**
 
 ```bash
 npx react-native@latest init your_project_name
