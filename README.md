@@ -1,5 +1,9 @@
 # 同济大学2025用户交互技术课程项目
 
+## 相关项目
+
+* [2025同济大学用户交互技术课程作业](https://github.com/ycc250303/Human_Computer_Interface_Assignments)
+
 ## 1 项目名称
 
 ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
