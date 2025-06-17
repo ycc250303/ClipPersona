@@ -4,6 +4,11 @@
 
 * [2025同济大学用户交互技术课程作业](https://github.com/ycc250303/Human_Computer_Interface_Assignments)
 
+## 项目文档
+
+* [中文](https://github.com/ycc250303/ClipPersona/blob/main/ClipNova_Documentation_CN.md)
+* [English](https://github.com/ycc250303/ClipPersona/blob/main/ClipNova_Documentation.md)
+
 ## 1 项目名称
 
 ClipNova：一键成片、AI 智能剪辑，引领高效视频创作新体验。
