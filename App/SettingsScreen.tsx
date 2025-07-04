@@ -10,18 +10,29 @@ import {
   Alert,
   Modal,
   TextInput,
+  Switch,
 } from 'react-native';
-// import { Picker } from '@react-native-picker/picker'; // 假设已安装此库，或者需要使用 react-native-picker-select
+import { useLanguage } from './context/LanguageContext'; // 导入 useLanguage
+import { useUser } from './context/UserContext'; // 导入 useUser
+import { launchImageLibrary, ImageLibraryOptions } from 'react-native-image-picker'; // 导入图片选择器和类型
 
 const SettingsScreen: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false); // 控制模态框可见性
-  const [currentAvatarUri, setCurrentAvatarUri] = useState(require('../Images/SettingScreen/user.png')); // 当前头像URI
-  const [nickname, setNickname] = useState('请输入昵称'); // 昵称状态
   const [isEditingNickname, setIsEditingNickname] = useState(false); // 编辑模式状态
   const [tempNickname, setTempNickname] = useState(''); // 临时昵称，用于编辑输入框
 
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false); // 语言选择模态框可见性
+  const { currentLanguage, setLanguage } = useLanguage(); // 使用 useLanguage hook
+  const { nickname, avatarUri, setNickname, setAvatarUri } = useUser(); // 使用 useUser hook
+  const [isVoicePriorityEnabled, setIsVoicePriorityEnabled] = useState(false); // 语音优先切换状态
+  const [isCommunityUpdatesEnabled, setIsCommunityUpdatesEnabled] = useState(false); // 社区动态切换状态
+  const [isExportFormatModalVisible, setIsExportFormatModalVisible] = useState(false); // 导出格式选择模态框可见性
+  const [selectedExportFormat, setSelectedExportFormat] = useState('1080p'); // 默认导出格式
+  const [isFrameRateModalVisible, setIsFrameRateModalVisible] = useState(false); // 帧率选择模态框可见性
+  const [selectedFrameRate, setSelectedFrameRate] = useState('30fps'); // 默认帧率
+
   const handleHelpPress = () => {
-    Alert.alert('帮助', '这里是帮助信息的超链接');
+    Alert.alert('帮助', '这是一个视频编辑应用。您可以在主页查看草稿，在剪辑页面选择媒体进行编辑，并在设置页面管理您的账户和偏好设置。');
     // 实际应用中可以打开一个网页链接
     // Linking.openURL('https://your-help-url.com');
   };
@@ -34,27 +45,55 @@ const SettingsScreen: React.FC = () => {
     setIsModalVisible(false); // 关闭模态框
   };
 
-  const handleChangeAvatar = () => {
-    // 这里可以集成图片选择库（如 react-native-image-picker）来选择新头像
-    Alert.alert('提示', '更换头像功能待实现！');
-    // 假设选择新头像后，更新 currentAvatarUri
-    // setCurrentAvatarUri(newAvatarUri);
-    // setIsModalVisible(false); // 更换后关闭模态框
+  const handleChangeAvatar = async () => {
+    const options: ImageLibraryOptions = {
+      mediaType: 'photo',
+      quality: 1,
+      selectionLimit: 1,
+    };
+
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel) {
+        console.log('用户取消了图片选择');
+      } else if (response.errorCode) {
+        console.log('图片选择错误:', response.errorCode, response.errorMessage);
+        Alert.alert('错误', `图片选择失败: ${response.errorMessage}`);
+      } else if (response.assets && response.assets.length > 0) {
+        const selectedImageUri = response.assets[0].uri;
+        if (selectedImageUri) {
+          setAvatarUri({ uri: selectedImageUri }); // 更新头像URI到全局状态
+          setIsModalVisible(false); // 更换后关闭模态框
+          Alert.alert('成功', '头像已更换！');
+        }
+      }
+    });
   };
 
   const handleEditNickname = () => {
-    setTempNickname(nickname); // 进入编辑模式时，将当前昵称复制到临时昵称
+    setTempNickname(nickname === '请输入昵称' ? '' : nickname); // 进入编辑模式时，将当前昵称复制到临时昵称
     setIsEditingNickname(true); // 切换到编辑模式
   };
 
   const handleSaveNickname = () => {
-    setNickname(tempNickname); // 保存临时昵称到正式昵称
+    if (tempNickname.trim() === '') {
+      setNickname('请输入昵称'); // 如果输入为空，设置回默认值
+    } else {
+      setNickname(tempNickname); // 保存临时昵称到正式昵称（全局状态）
+    }
     setIsEditingNickname(false); // 退出编辑模式
   };
 
   const handleCancelEdit = () => {
     setIsEditingNickname(false); // 退出编辑模式，不保存更改
   };
+
+  const getLocalizedText = (zhText: string, enText: string) => {
+    return currentLanguage === 'zh' ? zhText : enText;
+  };
+
+  const exportFormatOptions = ['480p', '720p', '1080p', '4K']; // 导出格式选项
+  const frameRateOptions = ['24fps', '30fps', '60fps']; // 帧率选项
+  const languageOptions = ['中文', 'English'];
 
   return (
   <ImageBackground
@@ -78,6 +117,11 @@ const SettingsScreen: React.FC = () => {
       resizeMode="cover"
     />
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* 顶部标题 */}
+        <View style={styles.pageHeaderContainer}>
+          <Text style={styles.pageHeaderTitle}>{getLocalizedText('设置', 'Settings')}</Text>
+        </View>
+
         {/* 账户管理 */}
         <ImageBackground
           source={require('../Images/SettingScreen/Info.png')} // 账户管理背景图
@@ -85,17 +129,18 @@ const SettingsScreen: React.FC = () => {
           resizeMode="stretch"
         >
           <View style={styles.accountManagementContent}>
-            <Text style={styles.accountManagementText}>账户管理</Text>
+            <Text style={styles.accountManagementText}>{getLocalizedText('账户管理', 'Account Management')}</Text>
             {isEditingNickname ? (
               <TextInput
                 style={styles.nicknameInput}
-                value={tempNickname}
+                value={tempNickname === '请输入昵称' ? getLocalizedText('请输入昵称', 'Enter nickname') : tempNickname} // 兼容初始值
                 onChangeText={setTempNickname}
                 autoFocus
                 onBlur={handleSaveNickname} // 当输入框失去焦点时保存
+                placeholder={getLocalizedText('请输入昵称', 'Enter nickname')}
               />
             ) : (
-              <Text style={styles.nickname}>{nickname}</Text>
+              <Text style={styles.nickname}>{nickname === '请输入昵称' ? getLocalizedText('请输入昵称', 'Enter nickname') : nickname}</Text>
             )}
             <Image
               source={require('../Images/SettingScreen/point.png')}
@@ -104,7 +149,7 @@ const SettingsScreen: React.FC = () => {
             />
             <TouchableOpacity onPress={handleAvatarPress}>
               <Image
-                source={currentAvatarUri} // 使用状态中的头像URI
+                source={avatarUri} // 使用全局状态中的头像URI
                 style={styles.user}
                 resizeMode="contain"
               />
@@ -147,37 +192,82 @@ const SettingsScreen: React.FC = () => {
           resizeMode="stretch"
         >
           <View style={styles.settingSectionContent}>
-            <Text style={styles.sectionTitle}>剪辑偏好</Text>
+            <Text style={styles.sectionTitle}>{getLocalizedText('剪辑偏好', 'Editing Preferences')}</Text>
+            
+            {/* 导出格式 */}
+            <TouchableOpacity style={styles.settingItem} onPress={() => setIsExportFormatModalVisible(true)}>
+              <Text style={styles.settingLabel}>{getLocalizedText('导出格式', 'Export Format')}</Text>
+              <ImageBackground
+                source={require('../Images/SettingScreen/choose_box.png')}
+                style={styles.chooseBoxBackground}
+                resizeMode="stretch"
+              >
+                <View style={styles.settingValueWithIcon}>
+                  <Text style={styles.settingValue}>{selectedExportFormat}</Text>
+                  <Text style={styles.dropdownIcon}>▼</Text>
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+
+            {/* 帧率 */}
+            <TouchableOpacity style={styles.settingItem} onPress={() => setIsFrameRateModalVisible(true)}>
+              <Text style={styles.settingLabel}>{getLocalizedText('帧率', 'Frame Rate')}</Text>
+              <ImageBackground
+                source={require('../Images/SettingScreen/choose_box.png')}
+                style={styles.chooseBoxBackground}
+                resizeMode="stretch"
+              >
+                <View style={styles.settingValueWithIcon}>
+                  <Text style={styles.settingValue}>{selectedFrameRate}</Text>
+                  <Text style={styles.dropdownIcon}>▼</Text>
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+
+            {/* 社区动态 */}
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>导出格式</Text>
-              <Text style={styles.settingValue}>1080p</Text>
-            </View>
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>帧率</Text>
-              <Text style={styles.settingValue}>60fps</Text>
+              <Text style={styles.settingLabel}>{getLocalizedText('社区动态', 'Community Updates')}</Text>
+              <Switch
+                trackColor={{ false: '#767577', true: '#5ac8fa' }}
+                thumbColor={isCommunityUpdatesEnabled ? '#007AFF' : '#ada7ed'}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setIsCommunityUpdatesEnabled}
+                value={isCommunityUpdatesEnabled}
+              />
             </View>
           </View>
         </ImageBackground>
 
-        {/* 其他 */}
+        {/* 其他设置 */}
         <ImageBackground
           source={require('../Images/SettingScreen/background.png')} // 小框背景图
           style={styles.settingSectionBackground}
           resizeMode="stretch"
         >
           <View style={styles.settingSectionContent}>
-            <Text style={styles.sectionTitle}>其他</Text>
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>语言</Text>
-              <Text style={styles.settingValue}>中文</Text>
-            </View>
+            <Text style={styles.sectionTitle}>{getLocalizedText('其他', 'Other Settings')}</Text>
+
+            {/* 语言 */}
+            <TouchableOpacity style={styles.settingItem} onPress={() => setIsLanguageModalVisible(true)}>
+              <Text style={styles.settingLabel}>{getLocalizedText('语言', 'Language')}</Text>
+              <ImageBackground
+                source={require('../Images/SettingScreen/choose_box.png')}
+                style={styles.chooseBoxBackground}
+                resizeMode="stretch"
+              >
+                <View style={styles.settingValueWithIcon}>
+                  <Text style={styles.settingValue}>{getLocalizedText('中文', 'English')}</Text>
+                  <Text style={styles.dropdownIcon}>▼</Text>
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.settingItem} onPress={handleHelpPress}>
-              <Text style={styles.settingLabel}>帮助</Text>
-              <Text style={styles.helpLink}>点击查看</Text>
+              <Text style={styles.settingLabel}>{getLocalizedText('帮助', 'Help')}</Text>
+              <Text style={styles.helpLink}>{getLocalizedText('点击查看', 'Click to view')}</Text>
             </TouchableOpacity>
           </View>
         </ImageBackground>
-
 
       </ScrollView>
 
@@ -190,12 +280,99 @@ const SettingsScreen: React.FC = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Image source={currentAvatarUri} style={styles.fullScreenAvatar} resizeMode="contain" />
+            <Image source={avatarUri} style={styles.fullScreenAvatar} resizeMode="contain" />
             <TouchableOpacity style={styles.modalButton} onPress={handleChangeAvatar}>
               <Text style={styles.modalButtonText}>更换头像</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, styles.closeButton]} onPress={handleCloseModal}>
               <Text style={styles.modalButtonText}>关闭</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Language Selection Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isLanguageModalVisible}
+        onRequestClose={() => setIsLanguageModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{getLocalizedText('选择语言', 'Select Language')}</Text>
+            {languageOptions.map((lang, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalButton}
+                onPress={() => {
+                  setLanguage(lang === '中文' ? 'zh' : 'en');
+                  setIsLanguageModalVisible(false);
+                }}
+              >
+                <Text style={styles.modalButtonText}>{lang}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.modalButton, styles.closeButton]} onPress={() => setIsLanguageModalVisible(false)}>
+              <Text style={styles.modalButtonText}>{getLocalizedText('取消', 'Cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Export Format Selection Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isExportFormatModalVisible}
+        onRequestClose={() => setIsExportFormatModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{getLocalizedText('选择导出格式', 'Select Export Format')}</Text>
+            {exportFormatOptions.map((format, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalButton}
+                onPress={() => {
+                  setSelectedExportFormat(format);
+                  setIsExportFormatModalVisible(false);
+                }}
+              >
+                <Text style={styles.modalButtonText}>{format}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.modalButton, styles.closeButton]} onPress={() => setIsExportFormatModalVisible(false)}>
+              <Text style={styles.modalButtonText}>{getLocalizedText('取消', 'Cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Frame Rate Selection Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isFrameRateModalVisible}
+        onRequestClose={() => setIsFrameRateModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{getLocalizedText('选择帧率', 'Select Frame Rate')}</Text>
+            {frameRateOptions.map((rate, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalButton}
+                onPress={() => {
+                  setSelectedFrameRate(rate);
+                  setIsFrameRateModalVisible(false);
+                }}
+              >
+                <Text style={styles.modalButtonText}>{rate}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.modalButton, styles.closeButton]} onPress={() => setIsFrameRateModalVisible(false)}>
+              <Text style={styles.modalButtonText}>{getLocalizedText('取消', 'Cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -231,16 +408,27 @@ const styles = StyleSheet.create({
     },
   scrollContent: {
     padding: 20,
-    paddingTop: 100, // 增加顶部内边距
+    paddingTop: 80, // Increased to provide consistent spacing from top
     alignItems: 'center',
   },
+  pageHeaderContainer: { // 新增页面头部容器样式
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30, // Consistent spacing below the title
+  },
+  pageHeaderTitle: { // 新增页面头部标题样式
+    fontSize: 28, // Standardized font size
+    fontWeight: 'bold',
+    color: 'white',
+  },
   accountManagementBackground: {
-    width: '105%',
+    width: '110%',
     height: 250, // 增加高度
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30, // 增加底部外边距
     paddingHorizontal: 10,
+    top: -20,
   },
   accountManagementContent: {
     width: '100%',
@@ -286,8 +474,8 @@ const styles = StyleSheet.create({
       width: 20, // 增大图标尺寸
       height: 50,
       position: 'absolute',
-      top: 95,
-      left: 230,
+      top: 122,
+      left: 122,
     },
   nicknameEditButtons: {
     flexDirection: 'row',
@@ -317,14 +505,14 @@ const styles = StyleSheet.create({
       height: 80,
       position: 'absolute',
       bottom: 60,
-      right: 55,
+      right: 10,
     },
   walletIcon: {
     width: 80, // 增大图标尺寸
     height: 80,
     position: 'absolute',
     bottom: 60,
-    right: 50,
+    right: 10,
   },
   pointIcon: {
     width: 300,
@@ -338,39 +526,48 @@ const styles = StyleSheet.create({
     marginBottom: 30, // 增加底部外边距
     padding: 25, // 增加内边距
     borderRadius: 15, // 稍微增大圆角
-    left: 18,
+    left: 20,
     opacity: 0.8, // 设置图片透明度
+    top: -40,
   },
   settingSectionContent: {
-    width: '100%',
+    width: '90%',
+
   },
   sectionTitle: {
     fontSize: 20, // 稍微增大字体
     fontWeight: 'bold',
     marginBottom: 15, // 增加底部外边距
     color: '#FFF',
+    left: -6,
   },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15, // 增加底部外边距
-    paddingVertical: 12, // 增加垂直内边距
+    marginBottom: 15,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEE',
-    right: 17,
+    right: 8,
   },
   settingLabel: {
-    fontSize: 18, // 稍微增大字体
+    fontSize: 18,
     color: '#555',
   },
   settingValue: {
-    fontSize: 18, // 稍微增大字体
-    color: '#FFF',
+    fontSize: 18,
+    color: '#007AFF',
   },
   helpLink: {
     color: '#007AFF',
     fontSize: 18, // 稍微增大字体
+  },
+  modalTitle: { // 新增：模态框标题样式
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#000',
   },
   modalContainer: {
     flex: 1,
@@ -396,6 +593,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 5,
     marginTop: 10,
+    width: '80%',
+    alignItems: 'center',
   },
   modalButtonText: {
     color: 'white',
@@ -404,6 +603,23 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     backgroundColor: '#FF3B30',
+  },
+  settingValueWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%', // 确保内容撑满背景图
+    paddingHorizontal: 15, // 内部文字左右边距
+  },
+  chooseBoxBackground: {
+    width: 150, // 根据图片调整宽度
+    height: 40, // 根据图片调整高度
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownIcon: {
+    marginLeft: 5,
+    color: '#555',
+    fontSize: 12,
   },
 });
 
