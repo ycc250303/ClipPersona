@@ -107,6 +107,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
+        <View style={styles.headerTitleWrapper}>
+          <Text style={styles.headerTitle}>{getLocalizedText('主页', 'Home')}</Text>
+        </View>
         <View style={styles.headerContainer}>
           {/* 用户头像和昵称 */}
           <View style={styles.userInfoLeft}>
@@ -114,9 +117,6 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               <Image source={avatarUri} style={styles.avatarImageHeader} resizeMode="cover" />
             </View>
             <Text style={styles.avatarTextHeader}>{nickname}</Text>
-          </View>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{getLocalizedText('主页', 'Home')}</Text>
           </View>
           <View style={styles.headerRight}>
             <ImageBackground
@@ -275,6 +275,25 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 80,
   },
+  headerTitleWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    backgroundColor: 'transparent',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    textAlign: 'center',
+    lineHeight: 56,
+  },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -303,28 +322,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     fontWeight: 'bold',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    left: -15,
-    top: -5,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'black',
-    marginRight: 5,
-  },
-  plusIcon: {
-    width: 20,
-    height: 20,
-    tintColor: 'black', // Adjust color as needed
   },
   headerRight: {
     flexDirection: 'row',

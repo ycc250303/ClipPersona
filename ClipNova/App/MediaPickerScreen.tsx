@@ -199,22 +199,18 @@ const MediaPickerScreen: React.FC = () => {
         ) : (
           <View style={styles.actionButtonContainer}>
             <TouchableOpacity
-              style={[
-                styles.circularActionButton,
-                { backgroundColor: isDarkMode ? '#1E90FF' : '#007AFF', marginRight: 20 },
-              ]}
+              style={[styles.globalButton, {backgroundColor: 'rgb(120,121,241)'}]}
               onPress={handleEditPress}
+              activeOpacity={0.8}
             >
-              <Text style={styles.actionButtonText}>{getLocalizedText('编辑', 'Edit')}</Text>
+              <Text style={styles.globalButtonLabel}>{getLocalizedText('编辑', 'Edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.circularActionButton,
-                { backgroundColor: isDarkMode ? '#FF4444' : '#FF3B30' },
-              ]}
+              style={[styles.globalButton, {backgroundColor: '#B0B0B0'}]}
               onPress={handleClearMedia}
+              activeOpacity={0.8}
             >
-              <Text style={styles.actionButtonText}>{getLocalizedText('重选', 'Reselect')}</Text>
+              <Text style={styles.globalButtonLabel}>{getLocalizedText('重选', 'Reselect')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -235,7 +231,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 80, // Consistent spacing from top
+    paddingTop: 10, // Consistent spacing from top
     paddingBottom: 0,
   },
   videoDisplayBox: {
@@ -297,17 +293,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  circularActionButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  imageActionButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    top: 40,
+    marginHorizontal: 20,
   },
-  actionButtonText: {
+  actionButtonImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginBottom: 8,
+  },
+  actionButtonLabel: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -317,13 +316,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50, // This might need further adjustment after testing on device
     zIndex: 10,
-    marginBottom: 30, // Consistent spacing below the title
+    marginBottom: 0, // Consistent spacing below the title
   },
   pageHeaderTitle: { // New page header title style
     fontSize: 28, // Standardized font size
     fontWeight: 'bold',
     color: 'white',
-    top: 30,
+    top: 35,
+  },
+  globalButton: {
+    minWidth: 110,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 18,
+    paddingHorizontal: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  globalButtonLabel: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 1,
   },
 });
 

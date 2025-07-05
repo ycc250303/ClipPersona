@@ -392,14 +392,16 @@ const styles = StyleSheet.create({
         height: 32,
     },
     sendButton: {
-        marginLeft: 8,
+        marginLeft: 0,
         padding: 8,
         opacity: 0.8,
+        right: -20,
     },
     sendIcon: {
         width: 24,
         height: 24,
         tintColor: '#fff',
+
     },
     recordButton: {
         flex: 1,

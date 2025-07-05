@@ -729,6 +729,12 @@ const EditMediaScreen: React.FC<Props> = ({ route, navigation }) => {
       style={styles.container}
       resizeMode="cover"
     >
+      <View style={styles.headerTitleWrapper}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>{'<'}</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{getLocalizedText('项目编辑', 'Project Edit')}</Text>
+      </View>
       <KeyboardAvoidingView
         style={styles.innerContainer}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -793,17 +799,17 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: 4,
   },
   videoContainer: {
     width: width,
     height: width * 0.6,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   videoFrame: {
-    marginTop: 160,
+    marginTop: -90,
     width: width,
     height: width * 9 / 16,
     justifyContent: 'center',
@@ -814,7 +820,7 @@ const styles = StyleSheet.create({
     height: '85%',
   },
   chatContainer: {
-    marginTop: 50,
+    marginTop: 12,
     flex: 1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -838,7 +844,7 @@ const styles = StyleSheet.create({
   exportButton: {
     position: 'absolute',
     marginTop: 40,
-    top: 10,
+    top: -150,
     right: 10,
     backgroundColor: '#4CAF50',
     paddingHorizontal: 15,
@@ -851,7 +857,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  // ... 其他样式 ...
+  headerTitleWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 176,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: 'white',
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    textAlign: 'center',
+    lineHeight: 56,
+    left: -20,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
 });
 
 export default EditMediaScreen;

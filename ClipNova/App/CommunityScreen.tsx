@@ -57,9 +57,8 @@ const CommunityScreen: React.FC = ({ navigation }: any) => {
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.headerContainer}>
+      <View style={styles.headerTitleWrapper}>
         <Text style={styles.headerTitle}>{getLocalizedText('社区', 'Community')}</Text>
-        <View style={styles.headerRightPlaceholder} /> {/* Placeholder for right side alignment */}
       </View>
 
       <View style={styles.searchSortContainer}>
@@ -101,7 +100,7 @@ const CommunityScreen: React.FC = ({ navigation }: any) => {
         ))}
       </ScrollView>
 
-      <ScrollView contentContainerStyle={styles.cardsContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {dummyCards.map((card) => (
           <TouchableOpacity
             key={card.id}
@@ -139,24 +138,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  headerContainer: {
+  headerTitleWrapper: {
+    width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60, // Adjust for status bar
-    paddingBottom: 20,
-    backgroundColor: 'transparent',
+    marginTop: 80,
+    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    left: 180,
-    top: 10,
-  },
-  headerRightPlaceholder: {
-    width: 44, // To balance the back button
+    flex: 1,
+    textAlign: 'center',
   },
   searchSortContainer: {
     flexDirection: 'row',
@@ -206,29 +200,34 @@ const styles = StyleSheet.create({
   },
   categoryTabsContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
   },
   categoryTab: {
-    backgroundColor: '#3A3A3A', // Dark grey for unselected tabs
-    borderRadius: 20,
-    paddingVertical: 8,
+    backgroundColor: '#3A3A3A',
+    borderRadius: 10,
+    paddingVertical: 0,
     paddingHorizontal: 15,
     marginRight: 10,
   },
   selectedCategoryTab: {
-    backgroundColor: '#FFD700', // Yellow for selected tab
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    paddingVertical: 0,
   },
   categoryTabText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
+    marginBottom: -15,
   },
   selectedCategoryTabText: {
-    color: 'black', // Black text for selected tab
-    fontSize: 14,
+    color: 'black',
+    fontSize: 13,
   },
-  cardsContainer: {
-    //paddingHorizontal: 0,
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   card: {
     backgroundColor: 'transparent',
@@ -238,15 +237,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   cardImage: {
-    width: '100%',
+    width: 400,
     height: 200,
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    marginBottom: -5, // Negative margin to make the text background overlap slightly
+    marginBottom: -15, // Negative margin to make the text background overlap slightly
   },
   cardContentBackground: {
     padding: 25,
-    width: '108%',
+    width: 420,
     minHeight: 150,
     justifyContent: 'center',
     paddingTop: 15, // Add top padding to create space for overlapping

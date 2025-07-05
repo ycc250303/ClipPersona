@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { useLanguage } from './context/LanguageContext'; // Assuming context is available
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -66,13 +67,14 @@ const StyleCardDetailScreen: React.FC = ({ navigation, route }: any) => {
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backIcon}>&lt;</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{getLocalizedText('风格卡详情', 'Style Card Details')}</Text>
-        <View style={styles.headerRightPlaceholder} />
-      </View>
+      <SafeAreaView edges={['top']} style={{backgroundColor: 'transparent'}}>
+        <View style={styles.headerTitleWrapper}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>{'<'}</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{getLocalizedText('风格卡详情', 'Style Card Detail')}</Text>
+        </View>
+      </SafeAreaView>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Image source={dummyCard.image} style={styles.cardImage} resizeMode="cover" />
@@ -162,9 +164,6 @@ const StyleCardDetailScreen: React.FC = ({ navigation, route }: any) => {
                       value={commentInput}
                       onChangeText={setCommentInput}
                     />
-                    <TouchableOpacity style={styles.heartIconContainer}>
-                      <Text style={styles.heartIcon}>♡</Text>
-                    </TouchableOpacity>
                   </View>
                 </KeyboardAvoidingView>
             )}
@@ -181,31 +180,46 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  headerContainer: {
+  headerTitleWrapper: {
+    width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    justifyContent: 'center',
+    height: 96,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
     backgroundColor: 'transparent',
+    zIndex: 1000,
+    position: 'relative',
   },
   backButton: {
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 0,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1001,
   },
-  backIcon: {
-    fontSize: 24,
+  backButtonText: {
+    fontSize: 28,
     color: 'white',
+    fontWeight: 'bold',
+    marginRight: 0,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-  },
-  headerRightPlaceholder: {
-    width: 44,
+    flex: 1,
+    textAlign: 'center',
+    lineHeight: 56,
+    left: -12,
   },
   scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 6,
     paddingBottom: 20,
   },
   cardImage: {
@@ -215,7 +229,7 @@ const styles = StyleSheet.create({
     left: 18,
   },
   infoPanelBackground: {
-    width: '110%',
+    width: '112%',
     minHeight: 200,
     padding: 40,
     top: -40, // Adjusted for more overlap based on image
@@ -329,6 +343,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 10,
     marginTop: -15,
+    marginBottom: 65,
     overflow: 'hidden',
   },
   tabContentInner: {
