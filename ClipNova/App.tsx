@@ -220,7 +220,7 @@ const HomeStack = () => {
       <Stack.Screen
         name="EditMedia"
         component={EditMediaScreen}
-        options={{ title: getLocalizedText('项目编辑', 'Project Edit'), headerTransparent: true, headerTintColor: 'white' }}
+        options={{ title: getLocalizedText('项目编辑', 'Project Edit'), headerTransparent: true, headerTintColor: 'white', headerShown: false }}
       />
     </Stack.Navigator>
   );

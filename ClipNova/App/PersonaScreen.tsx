@@ -70,10 +70,8 @@ const PersonaScreen: React.FC = ({ navigation }: any) => {
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>{getLocalizedText('Persona管理', 'Persona Management')}</Text>
-          <View style={styles.headerRightPlaceholder} /> {/* For alignment */}
+        <View style={styles.headerTitleWrapper}>
+          <Text style={styles.headerTitle}>{getLocalizedText('Persona', 'Persona')}</Text>
         </View>
 
         {/* Create Persona Button */}
@@ -210,26 +208,26 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 80,
+    paddingBottom: 20,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  headerTitleWrapper: {
     width: '100%',
-    marginBottom: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
     paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    textAlign: 'center',
     flex: 1,
-    marginLeft: 40,
-
-  },
-  headerRightPlaceholder: {
-    width: 44,
+    textAlign: 'center',
+    lineHeight: 56,
   },
   createPersonaButton: {
     backgroundColor: '#6A5ACD',

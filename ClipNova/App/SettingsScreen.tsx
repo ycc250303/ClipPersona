@@ -117,9 +117,8 @@ const SettingsScreen: React.FC = () => {
       resizeMode="cover"
     />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 顶部标题 */}
-        <View style={styles.pageHeaderContainer}>
-          <Text style={styles.pageHeaderTitle}>{getLocalizedText('设置', 'Settings')}</Text>
+        <View style={styles.headerTitleWrapper}>
+          <Text style={styles.headerTitle}>{getLocalizedText('设置', 'Settings')}</Text>
         </View>
 
         {/* 账户管理 */}
@@ -407,27 +406,37 @@ const styles = StyleSheet.create({
       left: 120,
     },
   scrollContent: {
+    flexGrow: 1,
     padding: 20,
-    paddingTop: 80, // Increased to provide consistent spacing from top
-    alignItems: 'center',
+    paddingTop: 80,
+    paddingBottom: 20,
   },
-  pageHeaderContainer: { // 新增页面头部容器样式
+  headerTitleWrapper: {
     width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30, // Consistent spacing below the title
+    justifyContent: 'center',
+    height: 56,
+    paddingHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    backgroundColor: 'transparent',
   },
-  pageHeaderTitle: { // 新增页面头部标题样式
-    fontSize: 28, // Standardized font size
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
+    flex: 1,
+    textAlign: 'center',
+    lineHeight: 56,
   },
   accountManagementBackground: {
-    width: '110%',
+    width: 430,
     height: 250, // 增加高度
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30, // 增加底部外边距
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
     top: -20,
   },
   accountManagementContent: {
@@ -505,14 +514,14 @@ const styles = StyleSheet.create({
       height: 80,
       position: 'absolute',
       bottom: 60,
-      right: 10,
+      right: 50,
     },
   walletIcon: {
     width: 80, // 增大图标尺寸
     height: 80,
     position: 'absolute',
     bottom: 60,
-    right: 10,
+    right: 50,
   },
   pointIcon: {
     width: 300,
